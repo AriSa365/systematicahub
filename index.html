@@ -297,6 +297,30 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.2rem 0;}
 .config-step-desc{font-size:13px;color:var(--ink-mid);line-height:1.5;}
 .config-step-desc code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg);padding:1px 5px;border-radius:3px;}
 
+
+/* ── LIVE DATABASE SEARCH ── */
+.search-now-btn{background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all 0.15s;}
+.search-now-btn:hover{background:#0a5a5e;}
+.search-now-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.db-search-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem 1.6rem;margin-top:14px;}
+.db-search-panel-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.db-search-panel-sub{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+.db-source-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.db-source-row:last-child{border-bottom:none;}
+.db-source-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.db-source-name{font-size:13px;font-weight:600;color:var(--ink);width:160px;flex-shrink:0;}
+.db-source-status{font-size:12px;color:var(--ink-soft);flex:1;}
+.db-source-count{font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+.db-spin{width:12px;height:12px;border:2px solid rgba(42,82,152,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
+.results-summary{background:var(--green-light);border:1px solid rgba(45,106,45,0.2);border-radius:var(--radius-sm);padding:10px 14px;margin:14px 0;font-size:13px;color:var(--green);font-weight:500;}
+.import-btn{background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:9px 20px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px;margin-top:10px;transition:all 0.15s;}
+.import-btn:hover{background:var(--accent-glow);}
+.result-preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;max-height:300px;overflow-y:auto;display:block;}
+.result-preview-table th{padding:6px 10px;text-align:left;font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--border);background:var(--bg,#f5f3ee);position:sticky;top:0;}
+.result-preview-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--ink-mid);vertical-align:top;}
+.result-preview-table tr:hover td{background:var(--accent-light);}
+.result-title-cell{font-weight:500;color:var(--ink);max-width:300px;}
+
 @media(max-width:900px){
   .auth-left{display:none;}
   .auth-root{grid-template-columns:1fr;}
@@ -1312,110 +1336,258 @@ function parseCSV(text) {
   return rows;
 }
 
-const SearchStrategyPage = ({ reviews }) => {
-  const [question, setQuestion] = useState('');
-  const [pico, setPico]         = useState(null);
-  const [strings, setStrings]   = useState(null);
-  const [loading, setLoading]   = useState(false);
-  const [apiKey, setApiKey]     = useState('');
-  const [useAI, setUseAI]       = useState(false);
-  const [copiedDb, setCopiedDb] = useState('');
+const SearchStrategyPage = ({ studies, setStudies, reviews, showToast, onNav }) => {
+  const [question, setQuestion]         = useState('');
+  const [pico, setPico]                 = useState(null);
+  const [strings, setStrings]           = useState(null);
+  const [generating, setGenerating]     = useState(false);
+  const [searching, setSearching]       = useState(false);
+  const [apiKey, setApiKey]             = useState('');
+  const [useAI, setUseAI]               = useState(false);
+  const [copiedDb, setCopiedDb]         = useState('');
   const [selectedReview, setSelectedReview] = useState(reviews[0]?.id || '');
+  const [dbResults, setDbResults]       = useState({});   // {pubmed:{count,items}, europepmc:{...}, clintrials:{...}}
+  const [searchDone, setSearchDone]     = useState(false);
+  const [importing, setImporting]       = useState(false);
+  const stopRef = useRef(false);
 
   const DB_META = [
-    { key:'pubmed',     label:'PubMed / MEDLINE',   color:'#C62828', note:'MeSH + [tiab] field tags' },
-    { key:'embase',     label:'Embase',              color:'#6B2FA0', note:'Emtree + /exp notation' },
-    { key:'scopus',     label:'Scopus',              color:'#0D47A1', note:'TITLE-ABS-KEY format' },
-    { key:'cinahl',     label:'CINAHL',              color:'#0D7377', note:'MH heading format' },
-    { key:'cochrane',   label:'Cochrane CENTRAL',    color:'#2E7D32', note:'mh + ti,ab,kw' },
-    { key:'psycinfo',   label:'PsycINFO',            color:'#E65100', note:'DE descriptor format' },
-    { key:'econlit',    label:'EconLit / HEOR',      color:'#4A148C', note:'Economic & HTA databases' },
-    { key:'clintrials', label:'ClinicalTrials / WHO ICTRP', color:'#1565C0', note:'Registry search fields' },
+    { key:'pubmed',     label:'PubMed / MEDLINE',        color:'#C62828', note:'MeSH + [tiab] field tags', canSearch:true  },
+    { key:'europepmc',  label:'Europe PMC',               color:'#0D7377', note:'Free open API',            canSearch:true  },
+    { key:'clintrials', label:'ClinicalTrials.gov',       color:'#1565C0', note:'Registry search fields',   canSearch:true  },
+    { key:'embase',     label:'Embase',                   color:'#6B2FA0', note:'Emtree + /exp notation',   canSearch:false },
+    { key:'scopus',     label:'Scopus',                   color:'#0D47A1', note:'TITLE-ABS-KEY format',     canSearch:false },
+    { key:'cinahl',     label:'CINAHL',                   color:'#0D7377', note:'MH heading format',        canSearch:false },
+    { key:'cochrane',   label:'Cochrane CENTRAL',         color:'#2E7D32', note:'mh + ti,ab,kw',            canSearch:false },
+    { key:'econlit',    label:'EconLit / HEOR',           color:'#4A148C', note:'Economic & HTA databases', canSearch:false },
   ];
 
+  // ── Build a simple keyword query from the research question ──
+  const buildKeywordQuery = (q) => {
+    const drugs = [];
+    if (/glp.?1|semaglutide|liraglutide|exenatide|dulaglutide|tirzepatide/i.test(q)) drugs.push('GLP-1');
+    if (/sglt.?2|canagliflozin|dapagliflozin|empagliflozin|ertugliflozin/i.test(q)) drugs.push('SGLT2');
+    const hasDCE    = /discrete choice|conjoint|dce|preference/i.test(q);
+    const hasSafety = /adverse|safety|risk|side effect|tolerability/i.test(q);
+    const hasT2DM   = /type 2 diabetes|t2dm|t2d/i.test(q);
+
+    const parts = [];
+    if (drugs.length) parts.push('(' + drugs.join(' OR ') + ')');
+    else parts.push('(GLP-1 OR SGLT2 OR diabetes medication)');
+    if (hasT2DM) parts.push('(type 2 diabetes OR T2DM)');
+    if (hasSafety) parts.push('(adverse effects OR safety OR risk)');
+    if (hasDCE) parts.push('(discrete choice OR conjoint OR patient preference)');
+    return parts.join(' AND ');
+  };
+
+  // ── PubMed search via NCBI E-utilities (free, no key needed) ──
+  const searchPubMed = async (query) => {
+    try {
+      const kw = buildKeywordQuery(query);
+      const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(kw)}&retmax=50&retmode=json&usehistory=y`;
+      const sr = await fetch(searchUrl);
+      const sd = await sr.json();
+      const ids = sd.esearchresult?.idlist || [];
+      const total = parseInt(sd.esearchresult?.count || 0);
+      if (!ids.length) return { count: total, items: [] };
+
+      // Fetch details
+      const fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json`;
+      const fr = await fetch(fetchUrl);
+      const fd = await fr.json();
+      const items = ids.map(id => {
+        const r = fd.result?.[id];
+        if (!r) return null;
+        return {
+          id: 'pubmed_' + id,
+          pmid: id,
+          title: r.title || '',
+          authors: (r.authors || []).slice(0,3).map(a=>a.name).join(', ') + ((r.authors||[]).length > 3 ? ' et al.' : ''),
+          year: r.pubdate ? r.pubdate.split(' ')[0] : '',
+          journal: r.fulljournalname || r.source || '',
+          doi: r.elocationid?.replace('doi: ','') || '',
+          design: 'Observational',
+          n: 0, outcome:'', effect_size:'', ci:'',
+          rob_score:'Moderate', abstract:'', included: null,
+          screen_decision: null, screen_reason: null, screen_confidence: null,
+          source: 'PubMed',
+          review_id: selectedReview || ''
+        };
+      }).filter(Boolean);
+      return { count: total, items };
+    } catch(e) { return { count: 0, items: [], error: e.message }; }
+  };
+
+  // ── Europe PMC search (free API) ──
+  const searchEuropePMC = async (query) => {
+    try {
+      const kw = buildKeywordQuery(query);
+      const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(kw)}&format=json&pageSize=50&resultType=core`;
+      const r = await fetch(url);
+      const d = await r.json();
+      const total = d.hitCount || 0;
+      const items = (d.resultList?.result || []).map(rec => ({
+        id: 'epmc_' + (rec.pmid || rec.id),
+        pmid: rec.pmid || '',
+        title: rec.title || '',
+        authors: rec.authorString || '',
+        year: rec.pubYear || '',
+        journal: rec.journalTitle || '',
+        doi: rec.doi || '',
+        design: 'Observational',
+        n: 0, outcome:'', effect_size:'', ci:'',
+        rob_score:'Moderate', abstract: rec.abstractText || '',
+        included: null,
+        screen_decision: null, screen_reason: null, screen_confidence: null,
+        source: 'Europe PMC',
+        review_id: selectedReview || ''
+      }));
+      return { count: total, items };
+    } catch(e) { return { count: 0, items: [], error: e.message }; }
+  };
+
+  // ── ClinicalTrials.gov search (free API v2) ──
+  const searchClinicalTrials = async (query) => {
+    try {
+      const hasDrugs = /glp.?1|semaglutide|liraglutide|sglt.?2|empagliflozin|dapagliflozin/i.test(query);
+      const kw = hasDrugs ? 'GLP-1 OR SGLT2 OR semaglutide OR empagliflozin' : buildKeywordQuery(query);
+      const url = `https://clinicaltrials.gov/api/v2/studies?query.term=${encodeURIComponent(kw)}&query.cond=type+2+diabetes&pageSize=20&format=json`;
+      const r = await fetch(url);
+      const d = await r.json();
+      const total = d.totalCount || 0;
+      const items = (d.studies || []).map(s => {
+        const p = s.protocolSection;
+        const id = p?.identificationModule?.nctId || '';
+        return {
+          id: 'ct_' + id,
+          pmid: '',
+          title: p?.identificationModule?.briefTitle || '',
+          authors: p?.sponsorCollaboratorsModule?.leadSponsor?.name || '',
+          year: p?.statusModule?.startDateStruct?.date?.split('-')[0] || '',
+          journal: 'ClinicalTrials.gov',
+          doi: '',
+          nctid: id,
+          design: 'RCT',
+          n: p?.designModule?.enrollmentInfo?.count || 0,
+          outcome: p?.descriptionModule?.briefSummary?.slice(0,100) || '',
+          effect_size:'', ci:'',
+          rob_score:'Moderate', abstract: p?.descriptionModule?.briefSummary || '',
+          included: null,
+          screen_decision: null, screen_reason: null, screen_confidence: null,
+          source: 'ClinicalTrials.gov',
+          review_id: selectedReview || ''
+        };
+      });
+      return { count: total, items };
+    } catch(e) { return { count: 0, items: [], error: e.message }; }
+  };
+
+  // ── Master search runner ──
+  const runLiveSearch = async () => {
+    if (!question.trim()) return;
+    stopRef.current = false;
+    setSearching(true);
+    setDbResults({});
+    setSearchDone(false);
+
+    const sources = [
+      { key: 'pubmed',     label: 'PubMed',             fn: searchPubMed },
+      { key: 'europepmc', label: 'Europe PMC',          fn: searchEuropePMC },
+      { key: 'clintrials',label: 'ClinicalTrials.gov',  fn: searchClinicalTrials },
+    ];
+
+    for (const src of sources) {
+      if (stopRef.current) break;
+      setDbResults(prev => ({ ...prev, [src.key]: { status: 'searching', count: 0, items: [] } }));
+      const result = await src.fn(question);
+      setDbResults(prev => ({ ...prev, [src.key]: { status: result.error ? 'error' : 'done', ...result } }));
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    setSearching(false);
+    setSearchDone(true);
+    showToast('Search complete! Review results below.', 'success');
+  };
+
+  // ── Import all results into Library ──
+  const importToLibrary = () => {
+    setImporting(true);
+    const allItems = Object.values(dbResults).flatMap(d => d.items || []);
+    if (!allItems.length) { showToast('No results to import', 'error'); setImporting(false); return; }
+
+    setStudies(prev => {
+      const existingTitles = new Set(prev.map(s => (s.title||'').toLowerCase().trim()));
+      const newOnes = allItems.filter(s => s.title && !existingTitles.has(s.title.toLowerCase().trim()));
+      showToast(`Imported ${newOnes.length} studies into Library (${allItems.length - newOnes.length} duplicates skipped)`, 'success');
+      return [...newOnes, ...prev];
+    });
+
+    setImporting(false);
+    setTimeout(() => onNav('library'), 800);
+  };
+
+  // ── Generate search strings ──
   const handleGenerate = async () => {
     if (!question.trim()) return;
-    setLoading(true); setPico(null); setStrings(null);
+    setGenerating(true); setPico(null); setStrings(null); setDbResults({}); setSearchDone(false);
     if (useAI && apiKey.trim()) {
-      // AI-enhanced via Anthropic API
       try {
         const resp = await fetch('https://api.anthropic.com/v1/messages', {
           method:'POST',
           headers:{'Content-Type':'application/json','x-api-key':apiKey.trim(),'anthropic-version':'2023-06-01'},
           body: JSON.stringify({
             model:'claude-sonnet-4-6', max_tokens:3000,
-            system:`You are an expert systematic review librarian and health economist. Given a research question, you:
-1. Parse it into PICO components
-2. Generate optimised search strings for 8 databases
-
-Return ONLY valid JSON in this exact structure:
-{
-  "pico": {"P":"...","I":"...","C":"...","O":"..."},
-  "strings": {
-    "pubmed": "full PubMed search string with MeSH terms and [tiab] tags",
-    "embase": "Embase search with Emtree /exp terms",
-    "scopus": "Scopus TITLE-ABS-KEY format",
-    "cinahl": "CINAHL MH heading format",
-    "cochrane": "Cochrane mh + ti,ab,kw format",
-    "psycinfo": "PsycINFO DE descriptor format",
-    "econlit": "EconLit/HEOR keyword string for economic databases",
-    "clintrials": "ClinicalTrials.gov / WHO ICTRP registry search fields"
-  }
-}`,
+            system:`You are an expert systematic review librarian. Parse the research question into PICO and generate optimised database search strings. Return ONLY valid JSON:
+{"pico":{"P":"...","I":"...","C":"...","O":"..."},"strings":{"pubmed":"...","embase":"...","scopus":"...","cinahl":"...","cochrane":"...","psycinfo":"...","econlit":"...","clintrials":"..."}}`,
             messages:[{role:'user',content:'Research question: '+question}]
           })
         });
         const data = await resp.json();
         const raw  = data.content[0].text.replace(/```json|```/g,'').trim();
         const parsed = JSON.parse(raw);
-        setPico(parsed.pico);
-        setStrings(parsed.strings);
+        setPico(parsed.pico); setStrings(parsed.strings);
       } catch(e) {
-        // Fallback to free
         const p = freeParsePICO(question);
         setPico(p); setStrings(buildSearchStrings(question, p));
       }
     } else {
-      // Free rule-based
       const p = freeParsePICO(question);
       setPico(p); setStrings(buildSearchStrings(question, p));
     }
-    setLoading(false);
+    setGenerating(false);
   };
 
   const copyToClipboard = (key, text) => {
     navigator.clipboard.writeText(text).then(() => { setCopiedDb(key); setTimeout(()=>setCopiedDb(''),2000); });
   };
 
+  const totalFound   = Object.values(dbResults).reduce((a,d)=>a+(d.count||0),0);
+  const totalItems   = Object.values(dbResults).reduce((a,d)=>a+(d.items?.length||0),0);
+  const allDone      = searchDone && !searching;
+
   return (
     <div>
       <div className="page-header">
         <div className="page-header-row">
           <h1>Search Strategy Generator</h1>
-          <span className="free-badge">FREE · runs in browser</span>
+          <span style={{fontSize:11,fontWeight:600,background:'var(--green-light)',color:'var(--green)',padding:'3px 10px',borderRadius:20,letterSpacing:'0.3px'}}>FREE · no API key needed</span>
         </div>
       </div>
       <div className="page-body">
 
-        {/* Input card */}
+        {/* Input */}
         <div className="ss-card">
-          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:'var(--ink)'}}>Paste your research question or PICO</div>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:'var(--ink)'}}>Research question or PICO</div>
           <textarea className="form-input" style={{width:'100%',minHeight:80,marginBottom:10}}
             placeholder="e.g. In adults with type 2 diabetes, what are the risk attributes of GLP-1 receptor agonists and SGLT-2 inhibitors that influence patient treatment preferences in discrete choice experiments?"
             value={question} onChange={e=>setQuestion(e.target.value)}/>
 
-          {/* AI toggle */}
-          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12,flexWrap:'wrap'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,flexWrap:'wrap'}}>
             <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:13}}>
               <input type="checkbox" checked={useAI} onChange={e=>setUseAI(e.target.checked)} style={{width:14,height:14}}/>
-              Enhance with AI (optional)
+              Enhance with AI
             </label>
-            {useAI && (
-              <input className="form-input" type="password" style={{flex:1,minWidth:200,fontSize:12,fontFamily:'JetBrains Mono,monospace'}}
-                placeholder="sk-ant-... (Anthropic API key — for improved MeSH mapping)"
-                value={apiKey} onChange={e=>setApiKey(e.target.value)}/>
-            )}
-            {!useAI && <span style={{fontSize:12,color:'var(--ink-soft)'}}>Free keyword mode active — no API key needed</span>}
+            {useAI && <input className="form-input" type="password" style={{flex:1,minWidth:200,fontSize:12,fontFamily:'JetBrains Mono,monospace'}} placeholder="sk-ant-... Anthropic API key" value={apiKey} onChange={e=>setApiKey(e.target.value)}/>}
           </div>
 
           {reviews.length > 0 && (
@@ -1428,15 +1600,21 @@ Return ONLY valid JSON in this exact structure:
             </div>
           )}
 
-          <button className="btn btn-primary" onClick={handleGenerate} disabled={loading||!question.trim()} style={{minWidth:160}}>
-            {loading ? <><span className="loading-spin"/>Generating…</> : <><Icon name="zap" size={14}/>Generate search strings</>}
-          </button>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+            <button className="btn btn-primary" onClick={handleGenerate} disabled={generating||!question.trim()}>
+              {generating ? <><span className="loading-spin"/>Generating…</> : <><Icon name="zap" size={14}/>Generate search strings</>}
+            </button>
+            <button className="search-now-btn" onClick={runLiveSearch} disabled={searching||!question.trim()}>
+              {searching ? <><span style={{width:14,height:14,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'white',borderRadius:'50%',animation:'spin 0.7s linear infinite',display:'inline-block'}}/>Searching…</>
+                : <><Icon name="search" size={14}/>Search PubMed + Europe PMC + ClinicalTrials</>}
+            </button>
+          </div>
         </div>
 
-        {/* PICO parsed */}
+        {/* PICO */}
         {pico && (
           <div className="ss-card">
-            <div style={{fontWeight:600,fontSize:14,marginBottom:8,color:'var(--ink)'}}>Parsed PICO</div>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:8}}>Parsed PICO</div>
             <div className="pico-parsed">
               {Object.entries(pico).map(([k,v])=>(
                 <div className="pico-box" key={k}>
@@ -1448,18 +1626,93 @@ Return ONLY valid JSON in this exact structure:
           </div>
         )}
 
-        {/* Database search strings */}
+        {/* Live search status panel */}
+        {Object.keys(dbResults).length > 0 && (
+          <div className="db-search-panel">
+            <div className="db-search-panel-title">Live database search</div>
+            <div className="db-search-panel-sub">Searching free open-access databases in real time</div>
+
+            {[
+              {key:'pubmed',    label:'PubMed / MEDLINE',      color:'#C62828'},
+              {key:'europepmc', label:'Europe PMC',             color:'#0D7377'},
+              {key:'clintrials',label:'ClinicalTrials.gov',     color:'#1565C0'},
+            ].map(db => {
+              const r = dbResults[db.key];
+              return (
+                <div className="db-source-row" key={db.key}>
+                  <span className="db-source-dot" style={{background: r?.status==='done' ? db.color : r?.status==='error' ? 'var(--red)' : 'var(--border-strong)'}}/>
+                  <span className="db-source-name">{db.label}</span>
+                  <span className="db-source-status">
+                    {!r && '—'}
+                    {r?.status==='searching' && <><span className="db-spin"/> Searching…</>}
+                    {r?.status==='done' && `Found ${r.count?.toLocaleString()} total records · showing ${r.items?.length}`}
+                    {r?.status==='error' && <span style={{color:'var(--red)'}}>Error — {r.error}</span>}
+                  </span>
+                  {r?.status==='done' && <span className="db-source-count">{r.items?.length} retrieved</span>}
+                </div>
+              );
+            })}
+
+            {/* Manual search reminder for paid DBs */}
+            <div style={{marginTop:12,padding:'8px 12px',background:'var(--amber-light)',borderRadius:'var(--radius-sm)',fontSize:12,color:'var(--amber)',border:'1px solid rgba(184,92,10,0.2)'}}>
+              ⚠ Embase, Scopus, CINAHL require institutional access — use the search strings above to search those manually.
+            </div>
+
+            {/* Summary + import */}
+            {allDone && totalItems > 0 && (
+              <>
+                <div className="results-summary">
+                  ✓ Retrieved {totalItems} studies across 3 databases ({totalFound.toLocaleString()} total records found). Ready to import into Library.
+                </div>
+
+                {/* Preview table */}
+                <div style={{overflowX:'auto',maxHeight:280,overflowY:'auto',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                    <thead>
+                      <tr style={{background:'var(--bg,#f5f3ee)'}}>
+                        {['Title','Authors','Journal','Year','Source'].map(h=>(
+                          <th key={h} style={{padding:'6px 10px',textAlign:'left',fontSize:10,fontWeight:600,letterSpacing:'0.5px',textTransform:'uppercase',color:'var(--ink-soft)',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap',position:'sticky',top:0,background:'var(--bg,#f5f3ee)'}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.values(dbResults).flatMap(d=>d.items||[]).slice(0,30).map((s,i)=>(
+                        <tr key={s.id||i} style={{borderBottom:'1px solid var(--border)'}}>
+                          <td style={{padding:'7px 10px',color:'var(--ink)',fontWeight:500,maxWidth:280,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.title}>{s.title}</td>
+                          <td style={{padding:'7px 10px',color:'var(--ink-mid)',whiteSpace:'nowrap'}}>{s.authors?.split(',')[0]}{s.authors?.includes(',')?' et al.':''}</td>
+                          <td style={{padding:'7px 10px',color:'var(--ink-soft)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}><em>{s.journal}</em></td>
+                          <td style={{padding:'7px 10px',color:'var(--ink-soft)',whiteSpace:'nowrap'}}>{s.year}</td>
+                          <td style={{padding:'7px 10px'}}>
+                            <span style={{padding:'2px 7px',borderRadius:4,fontSize:10,fontWeight:700,background:s.source==='PubMed'?'#FFEBEE':s.source==='Europe PMC'?'var(--teal-light)':'var(--accent-light)',color:s.source==='PubMed'?'#C62828':s.source==='Europe PMC'?'var(--teal)':'var(--accent)'}}>{s.source}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {totalItems > 30 && <div style={{fontSize:11,color:'var(--ink-soft)',marginTop:4}}>Showing first 30 of {totalItems} — all {totalItems} will be imported.</div>}
+
+                <button className="import-btn" onClick={importToLibrary} disabled={importing}>
+                  {importing ? <><span className="loading-spin"/>Importing…</> : <><Icon name="download" size={14}/>Import all {totalItems} studies into Library →</>}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Search strings grid */}
         {strings && (
           <>
-            <div style={{fontWeight:600,fontSize:14,color:'var(--ink)',marginBottom:10}}>
-              Search strings — {Object.keys(strings).length} databases
+            <div style={{fontWeight:600,fontSize:14,color:'var(--ink)',margin:'14px 0 10px'}}>
+              Search strings — copy &amp; paste into databases requiring institutional access
             </div>
             <div className="ss-db-grid">
               {DB_META.map(db => strings[db.key] ? (
-                <div className="ss-db-box" key={db.key}>
+                <div className="ss-db-box" key={db.key} style={{position:'relative'}}>
                   <div className="ss-db-name">
                     <span className="ss-db-icon" style={{background:db.color}}/>
                     {db.label}
+                    {db.canSearch && <span style={{fontSize:9,background:'var(--green-light)',color:'var(--green)',padding:'1px 5px',borderRadius:3,fontWeight:700,marginLeft:4}}>AUTO</span>}
                     <span style={{fontSize:10,color:'var(--ink-ghost)',fontWeight:400,marginLeft:'auto'}}>{db.note}</span>
                   </div>
                   <div className="ss-query">{strings[db.key]}</div>
@@ -1475,6 +1728,8 @@ Return ONLY valid JSON in this exact structure:
       </div>
     </div>
   );
+};
+
 };
 
 // ══════════════════════════════════════════════
@@ -1567,7 +1822,7 @@ const App = () => {
   if (!user) return <AuthScreen onLogin={setUser} />;
 
   const pages = { home: <Dashboard reviews={reviews} studies={studies} onNav={setPage} />, reviews: <ReviewsPage reviews={reviews} setReviews={setReviews} user={user} showToast={showToast} />, library: <LibraryPage studies={studies} setStudies={setStudies} reviews={reviews} showToast={showToast} />, prisma: <PrismaPage reviews={reviews} />, extraction: <ExtractionPage studies={studies} setStudies={setStudies} showToast={showToast} />, quality: <QualityPage studies={studies} />, team: <TeamPage team={team} setTeam={setTeam} reviews={reviews} showToast={showToast} />, settings: <SettingsPage user={user} showToast={showToast} />,
-      strategy: <SearchStrategyPage reviews={reviews} /> };
+      strategy: <SearchStrategyPage reviews={reviews} studies={studies} setStudies={setStudies} showToast={showToast} onNav={setPage} /> };
 
   return (
     <div className="app-root">
