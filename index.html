@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SystematicaHub — Evidence Synthesis Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F0EDE6;--surface:#fff;--ink:#1A2233;--ink-mid:#4A5568;--ink-soft:#718096;--ink-ghost:#A0AEC0;
+  --accent:#2653A3;--accent-light:#EBF0FA;--accent-glow:#4A76C8;
+  --teal:#0D7377;--teal-light:#E0F4F4;
+  --amber:#C47A1E;--amber-light:#FDF3E3;
+  --green:#2E7D32;--green-light:#E8F5E9;
+  --red:#C62828;--red-light:#FFEBEE;
+  --purple:#6B2FA0;--purple-light:#F3E8FF;
+  --border:rgba(26,34,51,0.10);--border-strong:rgba(26,34,51,0.18);
+  --shadow:0 2px 12px rgba(26,34,51,0.08);--shadow-lg:0 8px 32px rgba(26,34,51,0.14);
+  --radius:10px;--radius-sm:6px;--sidebar:240px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6;min-height:100vh;}
+input,textarea,select{font-family:inherit;font-size:14px;outline:none;}
+button{font-family:inherit;cursor:pointer;}
+a{color:inherit;text-decoration:none;}
+
+/* ── AUTH ── */
+.auth-root{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;}
+.auth-left{background:var(--accent);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:3rem 3.5rem;color:white;}
+.auth-left-logo{display:flex;align-items:center;gap:10px;margin-bottom:3rem;}
+.logo-box{width:38px;height:38px;background:rgba(255,255,255,0.2);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.logo-box svg{width:20px;height:20px;stroke:white;fill:none;stroke-width:2;}
+.logo-name{font-family:'DM Serif Display',serif;font-size:1.3rem;color:white;}
+.auth-left h1{font-family:'DM Serif Display',serif;font-size:2.4rem;line-height:1.2;margin-bottom:1rem;color:white;}
+.auth-left h1 em{font-style:italic;color:rgba(255,255,255,0.75);}
+.auth-left p{font-size:15px;color:rgba(255,255,255,0.7);max-width:380px;line-height:1.7;margin-bottom:2.5rem;}
+.auth-pills{display:flex;flex-direction:column;gap:10px;}
+.auth-pill{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;}
+.auth-pill-icon{width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.auth-pill-icon svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2;}
+.auth-pill-text{font-size:13px;color:rgba(255,255,255,0.85);font-weight:500;}
+.auth-right{display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg);}
+.auth-card{background:var(--surface);border-radius:16px;padding:2.5rem;width:100%;max-width:420px;box-shadow:var(--shadow-lg);border:1px solid var(--border);}
+.auth-card h2{font-family:'DM Serif Display',serif;font-size:1.7rem;margin-bottom:0.4rem;color:var(--ink);}
+.auth-card-sub{font-size:14px;color:var(--ink-soft);margin-bottom:2rem;}
+.auth-form{display:flex;flex-direction:column;gap:14px;}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:5px;}
+.field-input{width:100%;padding:10px 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);transition:border 0.15s;}
+.field-input:focus{border-color:var(--accent);background:white;}
+.field-input::placeholder{color:var(--ink-ghost);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;text-decoration:none;}
+.btn-primary{background:var(--accent);color:white;}
+.btn-primary:hover{background:var(--accent-glow);}
+.btn-ghost{background:transparent;color:var(--ink-mid);border:1px solid var(--border-strong);}
+.btn-ghost:hover{background:var(--bg);}
+.btn-white{background:white;color:var(--ink);border:1px solid var(--border-strong);}
+.btn-white:hover{background:var(--bg);}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid rgba(198,40,40,0.2);}
+.btn-danger:hover{background:#FFCDD2;}
+.btn-full{width:100%;}
+.btn-lg{padding:11px 24px;font-size:15px;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn:disabled{opacity:0.55;cursor:not-allowed;}
+.divider-or{display:flex;align-items:center;gap:10px;margin:4px 0;color:var(--ink-ghost);font-size:13px;}
+.divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:var(--border);}
+.auth-switch{text-align:center;font-size:13px;color:var(--ink-soft);margin-top:1rem;}
+.auth-switch button{background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:white;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;transition:all 0.15s;}
+.google-btn:hover{background:var(--bg);}
+.google-btn svg{width:18px;height:18px;}
+.error-msg{background:var(--red-light);color:var(--red);border:1px solid rgba(198,40,40,0.25);border-radius:var(--radius-sm);padding:9px 13px;font-size:13px;}
+.success-msg{background:var(--green-light);color:var(--green);border:1px solid rgba(46,125,50,0.25);border-radius:var(--radius-sm);padding:9px 13px;font-size:13px;}
+
+/* ── APP SHELL ── */
+.app-root{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50;}
+.sidebar-logo{padding:1.1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.sidebar-logo .logo-box{background:var(--accent);width:32px;height:32px;border-radius:7px;}
+.sidebar-logo .logo-name{font-size:1rem;color:var(--ink);}
+.sidebar-logo .logo-name span{color:var(--ink-ghost);font-size:11px;font-family:'Inter',sans-serif;font-weight:400;display:block;line-height:1;}
+.sidebar-nav{flex:1;padding:0.8rem 0.7rem;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.nav-section-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-ghost);padding:8px 10px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:500;color:var(--ink-mid);cursor:pointer;transition:all 0.12s;border:none;background:none;width:100%;text-align:left;}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+.nav-item:hover{background:var(--bg);color:var(--ink);}
+.nav-item.active{background:var(--accent-light);color:var(--accent);}
+.sidebar-footer{padding:0.8rem;border-top:1px solid var(--border);}
+.user-chip{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;}
+.user-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;}
+.user-email{font-size:11px;color:var(--ink-ghost);}
+.main-content{margin-left:var(--sidebar);flex:1;min-width:0;}
+.page-header{padding:1.6rem 2rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10;}
+.page-header h1{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);}
+.page-header-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.page-body{padding:1.8rem 2rem;}
+
+/* ── CARDS & SURFACES ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.card-p{padding:1.4rem 1.6rem;}
+.card-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:0.3rem;}
+.card-sub{font-size:12px;color:var(--ink-soft);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;}
+.stat-num{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--accent);line-height:1;}
+.stat-label{font-size:12px;color:var(--ink-soft);margin-top:4px;font-weight:500;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.3px;}
+.badge-meta{background:var(--accent-light);color:var(--accent);}
+.badge-rct{background:var(--teal-light);color:var(--teal);}
+.badge-obs{background:var(--amber-light);color:var(--amber);}
+.badge-qual{background:var(--purple-light);color:var(--purple);}
+.badge-cohort{background:var(--green-light);color:var(--green);}
+.badge-status-active{background:var(--teal-light);color:var(--teal);}
+.badge-status-draft{background:var(--amber-light);color:var(--amber);}
+.badge-status-complete{background:var(--green-light);color:var(--green);}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--bg);}
+th{padding:9px 13px;text-align:left;font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:11px 13px;border-bottom:1px solid var(--border);color:var(--ink-mid);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--bg);}
+.td-title{color:var(--ink);font-weight:500;}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:1rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:12px;font-weight:600;color:var(--ink-soft);letter-spacing:0.5px;text-transform:uppercase;}
+.form-input{padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);width:100%;transition:border 0.15s;}
+.form-input:focus{border-color:var(--accent);background:white;}
+.form-input::placeholder{color:var(--ink-ghost);}
+textarea.form-input{resize:vertical;min-height:80px;}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.4rem;}
+.tab{padding:8px 16px;font-size:13.5px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;}
+.tab:hover{color:var(--ink);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,34,51,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal{background:var(--surface);border-radius:14px;padding:2rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;}
+.modal-title{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--ink);}
+.modal-close{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:4px;border-radius:4px;}
+.modal-close:hover{background:var(--bg);}
+.modal-close svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1.4rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+/* ── PRISMA ── */
+.prisma-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.prisma-phase{display:flex;flex-direction:column;gap:8px;}
+.phase-header{padding:7px 12px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;}
+.ph-ident{background:var(--accent-light);color:var(--accent);}
+.ph-screen{background:var(--teal-light);color:var(--teal);}
+.ph-elig{background:var(--amber-light);color:var(--amber);}
+.ph-incl{background:var(--green-light);color:var(--green);}
+.phase-box{border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:11px 13px;background:var(--bg);font-size:12px;line-height:1.5;color:var(--ink-mid);}
+.phase-box strong{color:var(--ink);display:block;margin-bottom:3px;font-size:13px;}
+.phase-n{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:500;color:var(--ink);margin-top:4px;}
+.phase-excl{border:1px dashed var(--border-strong);border-radius:var(--radius-sm);padding:9px 12px;background:var(--bg);font-size:11px;color:var(--ink-soft);line-height:1.5;}
+.phase-excl-title{font-weight:700;color:var(--red);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.funnel-bar-wrap{height:6px;background:var(--border);border-radius:3px;margin-top:5px;overflow:hidden;}
+.funnel-bar{height:100%;border-radius:3px;transition:width 0.6s ease;}
+.prisma-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.4rem;}
+
+/* ── STUDY CARDS ── */
+.study-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;gap:9px;}
+.study-card:hover{box-shadow:var(--shadow-lg);border-color:var(--accent);transform:translateY(-2px);}
+.study-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.study-title{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.45;}
+.study-authors{font-size:12px;color:var(--ink-soft);}
+.study-abstract{font-size:12.5px;color:var(--ink-mid);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.study-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--ink-soft);border-top:1px solid var(--border);padding-top:9px;margin-top:auto;}
+.rob-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;}
+.rob-low{background:var(--green);}
+.rob-mod{background:var(--amber);}
+.rob-high{background:var(--red);}
+
+/* ── SEARCH BAR ── */
+.search-wrap{position:relative;flex:1;}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--ink-ghost);fill:none;stroke-width:2;}
+.search-input{padding:9px 13px 9px 36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg);width:100%;color:var(--ink);}
+.search-input:focus{border-color:var(--accent);background:white;}
+.search-input::placeholder{color:var(--ink-ghost);}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+.filter-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border:1px solid var(--border-strong);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg);color:var(--ink-mid);transition:all 0.12s;}
+.filter-chip:hover{border-color:var(--accent);color:var(--accent);}
+.filter-chip.active{background:var(--accent);border-color:var(--accent);color:white;}
+.filter-dot{width:6px;height:6px;border-radius:50%;}
+
+/* ── TEAM ── */
+.team-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;}
+.team-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;}
+.team-info{flex:1;}
+.team-name{font-size:14px;font-weight:600;color:var(--ink);}
+.team-role{font-size:12px;color:var(--ink-soft);}
+.role-badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.role-lead{background:var(--accent-light);color:var(--accent);}
+.role-reviewer{background:var(--teal-light);color:var(--teal);}
+.role-viewer{background:var(--bg);color:var(--ink-soft);border:1px solid var(--border);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;background:var(--ink);color:white;padding:12px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);animation:slideUp 0.2s ease;}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* ── REVIEW CARD ── */
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem 1.6rem;cursor:pointer;transition:all 0.18s;}
+.review-card:hover{box-shadow:var(--shadow-lg);border-color:var(--accent);}
+.review-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.5rem;}
+.review-title{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.4;}
+.review-meta{font-size:12px;color:var(--ink-soft);display:flex;gap:12px;margin-top:6px;}
+.review-pico{font-size:12px;color:var(--ink-mid);margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;background:var(--accent);transition:width 0.4s;}
+
+/* ── SETUP BANNER ── */
+.setup-banner{background:var(--amber-light);border:1px solid rgba(196,122,30,0.3);border-radius:var(--radius);padding:1.2rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:12px;}
+.setup-banner svg{width:20px;height:20px;stroke:var(--amber);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px;}
+.setup-banner-text h4{font-size:14px;font-weight:600;color:var(--amber);margin-bottom:3px;}
+.setup-banner-text p{font-size:13px;color:var(--ink-mid);line-height:1.5;}
+.setup-banner-text code{font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(196,122,30,0.1);padding:1px 5px;border-radius:3px;}
+
+/* ── MISC ── */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--ink-soft);}
+.empty-state svg{width:48px;height:48px;stroke:var(--ink-ghost);fill:none;stroke-width:1.5;margin:0 auto 1rem;display:block;}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--ink-mid);margin-bottom:6px;}
+.empty-state p{font-size:13px;}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.section-title{font-size:15px;font-weight:600;color:var(--ink);}
+.mono{font-family:'JetBrains Mono',monospace;}
+.text-sm{font-size:12px;}
+.text-muted{color:var(--ink-soft);}
+.mt-sm{margin-top:8px;}.mt-md{margin-top:16px;}.mt-lg{margin-top:24px;}
+.gap-sm{gap:8px;}.gap-md{gap:14px;}
+.flex{display:flex;}.flex-col{flex-direction:column;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}.flex-1{flex:1;}
+hr.divider{border:none;border-top:1px solid var(--border);margin:1.2rem 0;}
+
+/* ── SEARCH STRATEGY PAGE ── */
+.ss-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem 1.6rem;margin-bottom:14px;}
+.ss-db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:1rem;}
+.ss-db-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;}
+.ss-db-name{font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.ss-db-icon{width:8px;height:8px;border-radius:50%;}
+.ss-query{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:200px;overflow-y:auto;}
+.ss-copy-btn{font-size:11px;margin-top:6px;padding:4px 10px;background:var(--accent-light);color:var(--accent);border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:500;}
+.ss-copy-btn:hover{background:var(--accent);color:white;}
+.pico-parsed{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0;}
+.pico-box{background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px;}
+.pico-box-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;}
+.pico-box-val{font-size:12px;color:var(--ink);line-height:1.5;}
+.api-banner{background:var(--amber-light);border:1px solid rgba(184,92,10,0.2);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--ink-mid);margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;}
+.api-banner svg{width:16px;height:16px;stroke:var(--amber);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px;}
+.free-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:var(--green-light);color:var(--green);letter-spacing:0.3px;}
+.api-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:var(--amber-light);color:var(--amber);letter-spacing:0.3px;}
+.upload-zone{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:1.8rem 1rem;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg);margin-bottom:14px;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-light);}
+.upload-zone svg{width:28px;height:28px;stroke:var(--ink-ghost);fill:none;stroke-width:1.5;margin:0 auto 8px;display:block;}
+.upload-zone.drag svg{stroke:var(--accent);}
+.screen-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:14px;}
+.screen-bar-wrap{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0 5px;}
+.screen-bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width 0.3s;}
+.screen-counts{display:flex;gap:14px;font-size:12px;flex-wrap:wrap;}
+.dec-badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;}
+.dec-include{background:var(--green-light);color:var(--green);}
+.dec-exclude{background:var(--red-light);color:var(--red);}
+.dec-uncertain{background:var(--amber-light);color:var(--amber);}
+.ftabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.ftab{padding:7px 14px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.12s;}
+.ftab:hover{color:var(--ink);}.ftab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.reason-text{font-size:11px;color:var(--ink-mid);margin-top:4px;line-height:1.5;font-style:italic;}
+.decision-row{display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+.loading-spin{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── CONFIG SCREEN ── */
+.config-card{background:var(--surface);border-radius:16px;padding:2.5rem;max-width:600px;margin:3rem auto;box-shadow:var(--shadow-lg);border:1px solid var(--border);}
+.config-card h2{font-family:'DM Serif Display',serif;font-size:1.8rem;margin-bottom:0.5rem;}
+.config-card p{font-size:14px;color:var(--ink-mid);line-height:1.7;margin-bottom:1.5rem;}
+.config-step{display:flex;gap:14px;margin-bottom:1.2rem;align-items:flex-start;}
+.config-step-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.config-step-body{flex:1;}
+.config-step-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+.config-step-desc{font-size:13px;color:var(--ink-mid);line-height:1.5;}
+.config-step-desc code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg);padding:1px 5px;border-radius:3px;}
+
+@media(max-width:900px){
+  .auth-left{display:none;}
+  .auth-root{grid-template-columns:1fr;}
+  .sidebar{transform:translateX(-100%);transition:transform 0.2s;}
+  .main-content{margin-left:0;}
+  .prisma-grid{grid-template-columns:1fr 1fr;}
+  .grid-4{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ══════════════════════════════════════════════
+// CONFIGURATION — Replace with your Supabase keys
+// ══════════════════════════════════════════════
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+const isConfigured = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_URL.startsWith('https://'));
+let supabase = null;
+if (isConfigured) {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// ══════════════════════════════════════════════
+// DEMO DATA (shown before Supabase is configured)
+// ══════════════════════════════════════════════
+const DEMO_REVIEWS = [
+  { id: '1', title: 'Dietary fibre supplementation and glycaemic control in type 2 diabetes', pico: 'In adults with T2DM, does dietary fibre supplementation (I) vs placebo (C) reduce HbA1c (O) in RCTs (S)?', status: 'active', studies_count: 48, protocol_id: 'CRD42024401821', created_at: '2024-09-01', lead: 'Reynolds AN' },
+  { id: '2', title: 'Exercise interventions for depression in older adults', pico: 'In adults ≥65y with MDD, does exercise (I) vs usual care (C) reduce PHQ-9 score (O)?', status: 'active', studies_count: 58, protocol_id: 'CRD42024401930', created_at: '2024-11-10', lead: 'Singh B' },
+  { id: '3', title: 'Antibiotic prophylaxis to prevent surgical site infection', pico: 'In adults undergoing elective surgery, does IV antibiotic prophylaxis (I) vs placebo (C) reduce SSI within 30 days (O)?', status: 'complete', studies_count: 263, protocol_id: 'CD001179', created_at: '2023-01-15', lead: 'Webster J' },
+];
+const DEMO_STUDIES = [
+  { id: 's1', review_id: '1', title: 'Effect of dietary fibre on HbA1c: a 12-week RCT', authors: 'Reynolds AN, Mann J', year: 2023, journal: 'Lancet', design: 'RCT', n: 312, outcome: 'HbA1c (%)', effect_size: '-0.41', ci: '(-0.57, -0.25)', rob_score: 'Low', abstract: 'Randomised double-blind trial of 15g/day psyllium fibre vs matched placebo over 12 weeks in 312 adults with T2DM. Primary outcome was change in HbA1c at 12 weeks.', included: true },
+  { id: 's2', review_id: '1', title: 'Inulin supplementation and glycaemic markers in T2DM', authors: 'Slavin J, Carlson J', year: 2022, journal: 'Diabetes Care', design: 'RCT', n: 189, outcome: 'HbA1c (%)', effect_size: '-0.33', ci: '(-0.50, -0.16)', rob_score: 'Low', abstract: 'Parallel-group RCT investigating inulin-type fructan supplementation on HbA1c and fasting glucose over 16 weeks in overweight adults with T2DM.', included: true },
+  { id: 's3', review_id: '1', title: 'High-dose fibre supplementation: observational follow-up', authors: 'Dahl WJ, Stewart ML', year: 2021, journal: 'Nutr Rev', design: 'Cohort', n: 540, outcome: 'HbA1c (%)', effect_size: '-0.28', ci: '(-0.44, -0.12)', rob_score: 'Moderate', abstract: 'Two-year observational follow-up of participants from a fibre intervention trial, assessing sustained glycaemic effects and dietary adherence.', included: true },
+  { id: 's4', review_id: '2', title: 'Resistance training for depression in adults ≥65y', authors: 'Singh B, Olds T', year: 2023, journal: 'BMJ', design: 'RCT', n: 1240, outcome: 'PHQ-9', effect_size: 'SMD -1.04', ci: '(-1.26, -0.82)', rob_score: 'Low', abstract: 'Network meta-analysis of 58 RCTs examining exercise modalities. Resistance training, yoga, and aerobic exercise all showed large effects; combined modalities most efficacious.', included: true },
+];
+const DEMO_TEAM = [
+  { id: 't1', review_id: '1', name: 'Dr. A. Reynolds', email: 'a.reynolds@uni.ac.nz', role: 'Lead reviewer', initials: 'AR' },
+  { id: 't2', review_id: '1', name: 'Prof. J. Mann', email: 'j.mann@otago.ac.nz', role: 'Reviewer', initials: 'JM' },
+  { id: 't3', review_id: '1', name: 'Dr. S. Akerman', email: 's.akerman@uni.ac.nz', role: 'Reviewer', initials: 'SA' },
+];
+const DEMO_PRISMA = { identified: 3412, screened: 2987, eligible: 341, included: 48, excl_title: 2646, excl_fulltext: 293 };
+
+// ══════════════════════════════════════════════
+// ICONS
+// ══════════════════════════════════════════════
+const Icon = ({ name, size = 16 }) => {
+  const paths = {
+    home: <><rect x="3" y="9" width="18" height="13" rx="1"/><polyline points="3 9 12 2 21 9"/></>,
+    layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+    search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></>,
+    check: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
+    users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+    plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+    alert: <><triangle/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
+    db: <><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,
+    chart: <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,
+    file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+    trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></>,
+    mail: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,
+    globe: <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>,
+    zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
+    copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>,
+    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+    refresh: <><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>,
+  };
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+};
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+const Toast = ({ msg, type, onDone }) => {
+  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, []);
+  return <div className={`toast ${type}`}>{msg}</div>;
+};
+
+// ══════════════════════════════════════════════
+// SETUP / CONFIG SCREEN
+// ══════════════════════════════════════════════
+const SetupScreen = () => (
+  <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '2rem 1rem' }}>
+    <div className="config-card">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.5rem' }}>
+        <div className="logo-box" style={{ background: 'var(--accent)', width: 38, height: 38, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="layers" size={20} />
+        </div>
+        <div>
+          <div style={{ fontFamily: 'DM Serif Display, serif', fontSize: '1.2rem', color: 'var(--ink)' }}>SystematicaHub</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-ghost)' }}>Evidence Synthesis Platform</div>
+        </div>
+      </div>
+      <h2>Connect your Supabase project</h2>
+      <p>This app needs a Supabase project for authentication and data storage. Follow the steps below — it takes about 5 minutes and is completely free.</p>
+
+      <div className="config-step">
+        <div className="config-step-num">1</div>
+        <div className="config-step-body">
+          <div className="config-step-title">Create a free Supabase project</div>
+          <div className="config-step-desc">Go to <a href="https://supabase.com" target="_blank" style={{ color: 'var(--accent)' }}>supabase.com</a> → New project. Choose a name, password, and region. It takes ~1 minute to spin up.</div>
+        </div>
+      </div>
+
+      <div className="config-step">
+        <div className="config-step-num">2</div>
+        <div className="config-step-body">
+          <div className="config-step-title">Enable Google OAuth (optional)</div>
+          <div className="config-step-desc">In your Supabase dashboard → Authentication → Providers → Google. Add your Google OAuth client ID & secret from <a href="https://console.cloud.google.com" target="_blank" style={{ color: 'var(--accent)' }}>Google Cloud Console</a>.</div>
+        </div>
+      </div>
+
+      <div className="config-step">
+        <div className="config-step-num">3</div>
+        <div className="config-step-body">
+          <div className="config-step-title">Run the database setup SQL</div>
+          <div className="config-step-desc">In Supabase → SQL Editor, paste and run the SQL from the <code>SETUP.sql</code> file included in the download below. This creates all tables and security policies.</div>
+        </div>
+      </div>
+
+      <div className="config-step">
+        <div className="config-step-num">4</div>
+        <div className="config-step-body">
+          <div className="config-step-title">Add your credentials to this file</div>
+          <div className="config-step-desc">Open this HTML file and replace <code>YOUR_SUPABASE_URL</code> and <code>YOUR_SUPABASE_ANON_KEY</code> near the top (line ~50) with the values from Supabase → Project Settings → API.</div>
+        </div>
+      </div>
+
+      <div className="config-step">
+        <div className="config-step-num">5</div>
+        <div className="config-step-body">
+          <div className="config-step-title">Re-upload to GitHub Pages</div>
+          <div className="config-step-desc">Save the file, go to your GitHub repo → <code>index.html</code> → Edit → paste updated code → Commit. Your site will update within 60 seconds.</div>
+        </div>
+      </div>
+
+      <hr className="divider" />
+      <div style={{ background: 'var(--accent-light)', border: '1px solid rgba(38,83,163,0.2)', borderRadius: 'var(--radius)', padding: '1rem 1.2rem' }}>
+        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--accent)', marginBottom: 6 }}>Want to preview the app first?</div>
+        <div style={{ fontSize: 13, color: 'var(--ink-mid)', lineHeight: 1.6 }}>
+          Edit the top of this file and change <code style={{ fontFamily: 'JetBrains Mono', fontSize: 12, background: 'rgba(38,83,163,0.08)', padding: '1px 5px', borderRadius: 3 }}>DEMO_MODE = false</code> to <code style={{ fontFamily: 'JetBrains Mono', fontSize: 12, background: 'rgba(38,83,163,0.08)', padding: '1px 5px', borderRadius: 3 }}>DEMO_MODE = true</code> to explore the full interface with sample data — no Supabase required.
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ══════════════════════════════════════════════
+// DEMO MODE (works without Supabase)
+// ══════════════════════════════════════════════
+const DEMO_MODE = !isConfigured; // Set to true to preview without Supabase
+
+// ══════════════════════════════════════════════
+// AUTH SCREEN
+// ══════════════════════════════════════════════
+const AuthScreen = ({ onLogin }) => {
+  const [mode, setMode] = useState('login'); // login | signup | reset
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleSubmit = async () => {
+    setError(''); setSuccess(''); setLoading(true);
+    try {
+      if (mode === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        onLogin(data.user);
+      } else if (mode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+        if (error) throw error;
+        setSuccess('Account created! Check your email to confirm, then sign in.');
+        setMode('login');
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        if (error) throw error;
+        setSuccess('Password reset email sent. Check your inbox.');
+      }
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const handleGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    if (error) setError(error.message);
+  };
+
+  return (
+    <div className="auth-root">
+      <div className="auth-left">
+        <div className="auth-left-logo">
+          <div className="logo-box"><Icon name="layers" size={20} /></div>
+          <span className="logo-name">SystematicaHub</span>
+        </div>
+        <h1>Evidence synthesis,<br/><em>made rigorous</em></h1>
+        <p>The structured platform for systematic reviews, meta-analyses, and evidence maps — aligned with PRISMA 2020 and Cochrane standards.</p>
+        <div className="auth-pills">
+          {[['search','Multi-database search & deduplication'],['check','PRISMA 2020 flow diagram builder'],['file','Structured data extraction forms'],['users','Team screening & collaboration'],['chart','Risk of bias & GRADE appraisal']].map(([icon, text]) => (
+            <div className="auth-pill" key={icon}>
+              <div className="auth-pill-icon"><Icon name={icon} size={16} /></div>
+              <span className="auth-pill-text">{text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="auth-right">
+        <div className="auth-card">
+          <h2>{mode === 'login' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Reset password'}</h2>
+          <p className="auth-card-sub">{mode === 'login' ? 'Welcome back to SystematicaHub' : mode === 'signup' ? 'Start your first systematic review today' : "We'll send you a reset link"}</p>
+          {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
+          {success && <div className="success-msg" style={{ marginBottom: 12 }}>{success}</div>}
+          <div className="auth-form">
+            {mode === 'signup' && (
+              <div>
+                <label className="field-label">Full name</label>
+                <input className="field-input" placeholder="Dr. Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} />
+              </div>
+            )}
+            <div>
+              <label className="field-label">Email address</label>
+              <input className="field-input" type="email" placeholder="you@university.edu" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+            </div>
+            {mode !== 'reset' && (
+              <div>
+                <label className="field-label">Password</label>
+                <input className="field-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+              </div>
+            )}
+            {mode === 'login' && <div style={{ textAlign: 'right', marginTop: -6 }}><button style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 13, cursor: 'pointer' }} onClick={() => setMode('reset')}>Forgot password?</button></div>}
+            <button className="btn btn-primary btn-full btn-lg" onClick={handleSubmit} disabled={loading}>
+              {loading ? <span className="loading-spin" /> : mode === 'login' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link'}
+            </button>
+            {mode !== 'reset' && <>
+              <div className="divider-or">or</div>
+              <button className="google-btn" onClick={handleGoogle}>
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Continue with Google
+              </button>
+            </>}
+          </div>
+          <div className="auth-switch">
+            {mode === 'login' ? <>Don't have an account? <button onClick={() => { setMode('signup'); setError(''); }}>Sign up free</button></> : <><button onClick={() => { setMode('login'); setError(''); }}>← Back to sign in</button></>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════
+const Sidebar = ({ active, onNav, user, onLogout }) => {
+  const initials = (user?.user_metadata?.full_name || user?.email || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  return (
+    <div className="sidebar">
+      <div className="sidebar-logo">
+        <div className="logo-box" style={{ background: 'var(--accent)', width: 32, height: 32, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="layers" size={16} />
+        </div>
+        <div className="logo-name">SystematicaHub<span>Evidence Synthesis</span></div>
+      </div>
+      <nav className="sidebar-nav">
+        <div className="nav-section-label">Workspace</div>
+        {[['home','Dashboard','home'],['layers','My Reviews','reviews'],['search','Literature Library','library'],['chart','PRISMA Builder','prisma'],['file','Data Extraction','extraction'],['check','Quality Appraisal','quality'],['users','Team & Collaboration','team'],
+        ['globe','Search Strategy','strategy']].map(([icon, label, key]) => (
+          <button key={key} className={`nav-item${active === key ? ' active' : ''}`} onClick={() => onNav(key)}>
+            <Icon name={icon} size={16} />{label}
+          </button>
+        ))}
+        <div className="nav-section-label" style={{ marginTop: 8 }}>Account</div>
+        <button className="nav-item" onClick={() => onNav('settings')}><Icon name="settings" size={16} />Settings</button>
+      </nav>
+      <div className="sidebar-footer">
+        <div className="user-chip">
+          <div className="user-avatar">{initials}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.user_metadata?.full_name || 'Researcher'}</div>
+            <div className="user-email" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+          </div>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-soft)', padding: 4 }} onClick={onLogout} title="Sign out"><Icon name="logout" size={15} /></button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+const Dashboard = ({ reviews, studies, onNav }) => {
+  const active = reviews.filter(r => r.status === 'active').length;
+  const complete = reviews.filter(r => r.status === 'complete').length;
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <h1>Dashboard</h1>
+          <button className="btn btn-primary" onClick={() => onNav('reviews')}><Icon name="plus" size={15} />New review</button>
+        </div>
+      </div>
+      <div className="page-body">
+        <div className="grid-4" style={{ marginBottom: 24 }}>
+          {[['Total reviews', reviews.length, 'layers'],['Active reviews', active, 'chart'],['Studies indexed', studies.length, 'file'],['Team members', 3, 'users']].map(([label, num, icon]) => (
+            <div className="stat-card" key={label}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ color: 'var(--ink-soft)' }}><Icon name={icon} size={16} /></div>
+              </div>
+              <div className="stat-num">{num}</div>
+              <div className="stat-label">{label}</div>
+            </div>
+          ))}
+        </div>
+        <div className="section-head"><div className="section-title">Recent reviews</div><button className="btn btn-ghost btn-sm" onClick={() => onNav('reviews')}>View all</button></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {reviews.slice(0, 3).map(r => (
+            <div className="review-card" key={r.id} onClick={() => onNav('reviews')}>
+              <div className="review-card-header">
+                <div className="review-title">{r.title}</div>
+                <span className={`badge badge-status-${r.status}`}>{r.status}</span>
+              </div>
+              <div className="review-pico">{r.pico}</div>
+              <div className="review-meta">
+                <span>{r.studies_count} studies</span>
+                <span>Protocol: {r.protocol_id}</span>
+                <span>Lead: {r.lead}</span>
+              </div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${r.status === 'complete' ? 100 : 65}%` }} /></div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 24 }}>
+          <div className="section-head"><div className="section-title">Recent studies</div><button className="btn btn-ghost btn-sm" onClick={() => onNav('library')}>View all</button></div>
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Study</th><th>Design</th><th>n</th><th>Outcome</th><th>RoB</th></tr></thead>
+              <tbody>
+                {studies.slice(0, 4).map(s => (
+                  <tr key={s.id}>
+                    <td><div className="td-title">{s.authors} ({s.year})</div><div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{s.title}</div></td>
+                    <td><span className={`badge badge-${s.design === 'RCT' ? 'rct' : s.design === 'Cohort' ? 'cohort' : 'obs'}`}>{s.design}</span></td>
+                    <td className="mono">{s.n}</td>
+                    <td>{s.outcome}</td>
+                    <td><span className={`rob-dot rob-${s.rob_score === 'Low' ? 'low' : s.rob_score === 'Moderate' ? 'mod' : 'high'}`} />{s.rob_score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// REVIEWS PAGE
+// ══════════════════════════════════════════════
+const ReviewsPage = ({ reviews, setReviews, user, showToast }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ title: '', pico: '', protocol_id: '', status: 'draft' });
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = async () => {
+    if (!form.title.trim()) return;
+    setLoading(true);
+    if (isConfigured && !DEMO_MODE) {
+      const { data, error } = await supabase.from('reviews').insert([{ ...form, lead_id: user.id }]).select().single();
+      if (error) { showToast(error.message, 'error'); } else { setReviews(prev => [data, ...prev]); showToast('Review created', 'success'); setShowModal(false); setForm({ title: '', pico: '', protocol_id: '', status: 'draft' }); }
+    } else {
+      const newR = { id: Date.now().toString(), ...form, studies_count: 0, created_at: new Date().toISOString(), lead: user?.email || 'You' };
+      setReviews(prev => [newR, ...prev]); showToast('Review created (demo)', 'success'); setShowModal(false); setForm({ title: '', pico: '', protocol_id: '', status: 'draft' });
+    }
+    setLoading(false);
+  };
+
+  const handleDelete = (id) => { setReviews(prev => prev.filter(r => r.id !== id)); showToast('Review deleted', 'success'); };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <h1>My Reviews</h1>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}><Icon name="plus" size={15} />New review</button>
+        </div>
+      </div>
+      <div className="page-body">
+        {reviews.length === 0 ? (
+          <div className="empty-state"><Icon name="layers" size={48} /><h3>No reviews yet</h3><p>Create your first systematic review to get started.</p><div style={{ marginTop: 16 }}><button className="btn btn-primary" onClick={() => setShowModal(true)}>Create review</button></div></div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {reviews.map(r => (
+              <div className="review-card" key={r.id} style={{ cursor: 'default' }}>
+                <div className="review-card-header">
+                  <div className="review-title">{r.title}</div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span className={`badge badge-status-${r.status}`}>{r.status}</span>
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(r.id)}><Icon name="trash" size={12} /></button>
+                  </div>
+                </div>
+                {r.pico && <div className="review-pico">{r.pico}</div>}
+                <div className="review-meta">
+                  <span>{r.studies_count || 0} studies</span>
+                  {r.protocol_id && <span>Protocol: {r.protocol_id}</span>}
+                  <span>Lead: {r.lead}</span>
+                  <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                </div>
+                <div className="progress-bar"><div className="progress-fill" style={{ width: `${r.status === 'complete' ? 100 : r.status === 'active' ? 65 : 20}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {showModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+          <div className="modal">
+            <div className="modal-header"><div className="modal-title">New systematic review</div><button className="modal-close" onClick={() => setShowModal(false)}><Icon name="x" size={20} /></button></div>
+            <div className="form-row">
+              <div className="form-field" style={{ gridColumn: '1/-1' }}>
+                <label className="form-label">Review title *</label>
+                <input className="form-input" placeholder="Full title of your systematic review" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+              </div>
+              <div className="form-field" style={{ gridColumn: '1/-1' }}>
+                <label className="form-label">PICO question</label>
+                <textarea className="form-input" placeholder="In [population], does [intervention] vs [comparator] affect [outcome]?" value={form.pico} onChange={e => setForm(f => ({ ...f, pico: e.target.value }))} />
+              </div>
+              <div className="form-field">
+                <label className="form-label">PROSPERO / INPLASY ID</label>
+                <input className="form-input" placeholder="CRD42024…" value={form.protocol_id} onChange={e => setForm(f => ({ ...f, protocol_id: e.target.value }))} />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Status</label>
+                <select className="form-input" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+                  <option value="draft">Draft</option><option value="active">Active</option><option value="complete">Complete</option>
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleCreate} disabled={loading || !form.title.trim()}>{loading ? <span className="loading-spin" /> : 'Create review'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// LIBRARY
+// ══════════════════════════════════════════════
+const LibraryPage = ({ studies, setStudies, reviews, showToast }) => {
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('All');
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ title: '', authors: '', year: new Date().getFullYear(), journal: '', design: 'RCT', n: '', outcome: '', effect_size: '', ci: '', rob_score: 'Low', abstract: '', review_id: reviews[0]?.id || '' });
+  const [loading, setLoading] = useState(false);
+
+  const designs = ['All', 'RCT', 'Cohort', 'Observational', 'Qualitative', 'Case-Control'];
+  const filtered = studies.filter(s => {
+    const q = query.toLowerCase();
+    const matchQ = !q || s.title.toLowerCase().includes(q) || s.authors.toLowerCase().includes(q) || (s.abstract || '').toLowerCase().includes(q);
+    const matchF = filter === 'All' || s.design === filter;
+    return matchQ && matchF;
+  });
+
+  const handleAdd = async () => {
+    setLoading(true);
+    const newStudy = { id: Date.now().toString(), ...form, n: parseInt(form.n) || 0, included: true };
+    if (isConfigured && !DEMO_MODE) {
+      const { data, error } = await supabase.from('studies').insert([{ ...form, n: parseInt(form.n) || 0, included: true }]).select().single();
+      if (error) { showToast(error.message, 'error'); } else { setStudies(prev => [data, ...prev]); showToast('Study added', 'success'); setShowModal(false); }
+    } else {
+      setStudies(prev => [newStudy, ...prev]); showToast('Study added (demo)', 'success'); setShowModal(false);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <h1>Literature Library</h1>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}><Icon name="plus" size={15} />Add study</button>
+        </div>
+        <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
+          <div className="search-wrap">
+            <Icon name="search" size={16} />
+            <input className="search-input" placeholder="Search by title, author, keyword…" value={query} onChange={e => setQuery(e.target.value)} />
+          </div>
+        </div>
+        <div className="filter-row">
+          {designs.map(d => <button key={d} className={`filter-chip${filter === d ? ' active' : ''}`} onClick={() => setFilter(d)}>{d}</button>)}
+        </div>
+      </div>
+      <div className="page-body">
+        {filtered.length === 0 ? (
+          <div className="empty-state"><Icon name="search" /><h3>No studies found</h3><p>{query ? 'Try different search terms.' : 'Add your first study to the library.'}</p></div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 14 }}>
+            {filtered.map(s => (
+              <div className="study-card" key={s.id}>
+                <div className="study-card-top">
+                  <div className="study-title">{s.title}</div>
+                  <span className={`badge badge-${s.design === 'RCT' ? 'rct' : s.design === 'Cohort' ? 'cohort' : s.design === 'Qualitative' ? 'qual' : 'obs'}`}>{s.design}</span>
+                </div>
+                <div className="study-authors">{s.authors} · <em>{s.journal}</em> {s.year}</div>
+                {s.abstract && <div className="study-abstract">{s.abstract}</div>}
+                <div className="study-meta">
+                  <span><span className={`rob-dot rob-${s.rob_score === 'Low' ? 'low' : s.rob_score === 'Moderate' ? 'mod' : 'high'}`} />{s.rob_score}</span>
+                  <span>n = {s.n?.toLocaleString()}</span>
+                  {s.effect_size && <span className="mono">{s.effect_size}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {showModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+          <div className="modal">
+            <div className="modal-header"><div className="modal-title">Add study</div><button className="modal-close" onClick={() => setShowModal(false)}><Icon name="x" /></button></div>
+            <div className="form-row">
+              <div className="form-field" style={{ gridColumn: '1/-1' }}><label className="form-label">Title *</label><input className="form-input" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Full study title" /></div>
+              <div className="form-field"><label className="form-label">Authors</label><input className="form-input" value={form.authors} onChange={e => setForm(f => ({ ...f, authors: e.target.value }))} placeholder="Smith J, Jones A" /></div>
+              <div className="form-field"><label className="form-label">Journal</label><input className="form-input" value={form.journal} onChange={e => setForm(f => ({ ...f, journal: e.target.value }))} placeholder="Lancet, BMJ…" /></div>
+              <div className="form-field"><label className="form-label">Year</label><input className="form-input" type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} /></div>
+              <div className="form-field"><label className="form-label">Design</label><select className="form-input" value={form.design} onChange={e => setForm(f => ({ ...f, design: e.target.value }))}><option>RCT</option><option>Cohort</option><option>Observational</option><option>Qualitative</option><option>Case-Control</option></select></div>
+              <div className="form-field"><label className="form-label">Sample size (n)</label><input className="form-input" type="number" value={form.n} onChange={e => setForm(f => ({ ...f, n: e.target.value }))} placeholder="312" /></div>
+              <div className="form-field"><label className="form-label">Primary outcome</label><input className="form-input" value={form.outcome} onChange={e => setForm(f => ({ ...f, outcome: e.target.value }))} placeholder="HbA1c (%)" /></div>
+              <div className="form-field"><label className="form-label">Effect size</label><input className="form-input" value={form.effect_size} onChange={e => setForm(f => ({ ...f, effect_size: e.target.value }))} placeholder="-0.41 or SMD 0.52" /></div>
+              <div className="form-field"><label className="form-label">95% CI</label><input className="form-input" value={form.ci} onChange={e => setForm(f => ({ ...f, ci: e.target.value }))} placeholder="(-0.57, -0.25)" /></div>
+              <div className="form-field"><label className="form-label">Risk of bias</label><select className="form-input" value={form.rob_score} onChange={e => setForm(f => ({ ...f, rob_score: e.target.value }))}><option>Low</option><option>Moderate</option><option>High</option></select></div>
+              <div className="form-field" style={{ gridColumn: '1/-1' }}><label className="form-label">Abstract</label><textarea className="form-input" value={form.abstract} onChange={e => setForm(f => ({ ...f, abstract: e.target.value }))} placeholder="Paste abstract here…" /></div>
+              {reviews.length > 0 && <div className="form-field" style={{ gridColumn: '1/-1' }}><label className="form-label">Add to review</label><select className="form-input" value={form.review_id} onChange={e => setForm(f => ({ ...f, review_id: e.target.value }))}>{reviews.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}</select></div>}
+            </div>
+            <div className="modal-footer"><button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleAdd} disabled={loading || !form.title.trim()}>{loading ? <span className="loading-spin" /> : 'Add study'}</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// PRISMA BUILDER
+// ══════════════════════════════════════════════
+const PrismaPage = ({ reviews }) => {
+  const [data, setData] = useState(DEMO_PRISMA);
+  const max = data.identified || 1;
+  const pct = (n) => `${Math.min(100, Math.round((n / max) * 100))}%`;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row"><h1>PRISMA Flow Builder</h1><button className="btn btn-primary">Export SVG</button></div>
+      </div>
+      <div className="page-body">
+        <div className="card card-p" style={{ marginBottom: 20 }}>
+          <div className="section-head" style={{ marginBottom: 12 }}><div className="section-title">Enter your screening numbers</div></div>
+          <div className="prisma-input-grid">
+            {[['identified','Records identified (databases + registers)'],['screened','Records after deduplication (screened)'],['eligible','Full-texts assessed for eligibility'],['included','Studies included in review'],['excl_title','Excluded at title/abstract'],['excl_fulltext','Excluded at full-text']].map(([key, label]) => (
+              <div className="form-field" key={key}>
+                <label className="form-label">{label}</label>
+                <input className="form-input" type="number" value={data[key]} onChange={e => setData(d => ({ ...d, [key]: parseInt(e.target.value) || 0 }))} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card card-p">
+          <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>PRISMA 2020 flow diagram</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 20 }}>Automatically generated from your numbers above</div>
+          <div className="prisma-grid">
+            <div className="prisma-phase">
+              <div className="phase-header ph-ident">Identification</div>
+              <div className="phase-box"><strong>Records identified</strong>Databases &amp; registers<div className="phase-n">{data.identified?.toLocaleString()}</div><div className="funnel-bar-wrap"><div className="funnel-bar" style={{ width: '100%', background: 'var(--accent)' }} /></div></div>
+            </div>
+            <div className="prisma-phase">
+              <div className="phase-header ph-screen">Screening</div>
+              <div className="phase-box"><strong>Records screened</strong>After deduplication<div className="phase-n">{data.screened?.toLocaleString()}</div><div className="funnel-bar-wrap"><div className="funnel-bar" style={{ width: pct(data.screened), background: 'var(--teal)' }} /></div></div>
+              <div className="phase-excl"><div className="phase-excl-title">Excluded</div>Not relevant to PICO<div style={{ fontFamily: 'JetBrains Mono', fontSize: '1rem', color: 'var(--red)', marginTop: 2 }}>n = {(data.excl_title || 0).toLocaleString()}</div></div>
+            </div>
+            <div className="prisma-phase">
+              <div className="phase-header ph-elig">Eligibility</div>
+              <div className="phase-box"><strong>Full-texts assessed</strong>Eligibility review<div className="phase-n">{data.eligible?.toLocaleString()}</div><div className="funnel-bar-wrap"><div className="funnel-bar" style={{ width: pct(data.eligible), background: 'var(--amber)' }} /></div></div>
+              <div className="phase-excl"><div className="phase-excl-title">Excluded</div>Ineligible full-texts<div style={{ fontFamily: 'JetBrains Mono', fontSize: '1rem', color: 'var(--red)', marginTop: 2 }}>n = {(data.excl_fulltext || 0).toLocaleString()}</div></div>
+            </div>
+            <div className="prisma-phase">
+              <div className="phase-header ph-incl">Included</div>
+              <div className="phase-box" style={{ borderColor: 'var(--green)', background: 'var(--green-light)' }}><strong style={{ color: 'var(--green)' }}>Studies included</strong>In final review<div className="phase-n" style={{ color: 'var(--green)' }}>{data.included?.toLocaleString()}</div><div className="funnel-bar-wrap"><div className="funnel-bar" style={{ width: pct(data.included), background: 'var(--green)' }} /></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// DATA EXTRACTION
+// ══════════════════════════════════════════════
+const ExtractionPage = ({ studies, setStudies, showToast }) => {
+  const [activeTab, setActiveTab] = useState('table');
+  const [editId, setEditId] = useState(null);
+  const included = studies.filter(s => s.included);
+
+  const handleExport = () => {
+    const header = ['ID','Title','Authors','Year','Journal','Design','n','Outcome','Effect','95% CI','RoB'].join(',');
+    const rows = included.map(s => [s.id, `"${s.title}"`, `"${s.authors}"`, s.year, s.journal, s.design, s.n, `"${s.outcome}"`, s.effect_size, s.ci, s.rob_score].join(','));
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'extraction.csv'; a.click();
+    showToast('CSV downloaded', 'success');
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <h1>Data Extraction</h1>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost" onClick={handleExport}><Icon name="file" size={14} />Export CSV</button>
+          </div>
+        </div>
+      </div>
+      <div className="page-body">
+        <div className="tabs">
+          {[['table','Extraction table'],['form','Extract a study']].map(([k,l]) => <button key={k} className={`tab${activeTab===k?' active':''}`} onClick={() => setActiveTab(k)}>{l}</button>)}
+        </div>
+        {activeTab === 'table' && (
+          included.length === 0 ? <div className="empty-state"><Icon name="file" /><h3>No included studies yet</h3><p>Add studies from the Library and mark them as included.</p></div> :
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Authors (year)</th><th>Design</th><th>n</th><th>Outcome</th><th>Effect size</th><th>95% CI</th><th>RoB</th></tr></thead>
+              <tbody>
+                {included.map((s, i) => (
+                  <tr key={s.id}>
+                    <td className="mono text-sm">{String(i + 1).padStart(3, '0')}</td>
+                    <td><div className="td-title">{s.authors} ({s.year})</div><div style={{ fontSize: 12, color: 'var(--ink-soft)', maxWidth: 220 }}>{s.title}</div></td>
+                    <td><span className={`badge badge-${s.design==='RCT'?'rct':s.design==='Cohort'?'cohort':'obs'}`}>{s.design}</span></td>
+                    <td className="mono">{s.n?.toLocaleString()}</td>
+                    <td>{s.outcome}</td>
+                    <td className="mono">{s.effect_size}</td>
+                    <td className="mono">{s.ci}</td>
+                    <td><span className={`rob-dot rob-${s.rob_score==='Low'?'low':s.rob_score==='Moderate'?'mod':'high'}`} />{s.rob_score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {activeTab === 'form' && (
+          <div className="card card-p" style={{ maxWidth: 640 }}>
+            <div style={{ fontSize: 14, color: 'var(--ink-mid)', marginBottom: 16 }}>Use this form to extract data from a full-text study. Fields map to the RevMan XML schema.</div>
+            <div className="form-row">
+              {[['Study title','Title of the study'],['First author, year','e.g. Reynolds 2023'],['Journal','Lancet, BMJ…'],['Country','NZ, UK, Multi…'],['Design','RCT, Cohort…'],['Sample size','Total n'],['Intervention','Describe the intervention'],['Comparator','Control/comparator'],['Primary outcome','e.g. HbA1c (%)'],['Effect size','e.g. MD -0.41'],['95% CI','e.g. (-0.57, -0.25)'],['Risk of bias','Low / Moderate / High']].map(([label, ph], i) => (
+                <div className="form-field" key={label} style={i < 2 || i > 7 ? { gridColumn: '1/-1' } : {}}>
+                  <label className="form-label">{label}</label>
+                  <input className="form-input" placeholder={ph} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button className="btn btn-primary">Save extraction</button>
+              <button className="btn btn-ghost">Clear</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// QUALITY APPRAISAL
+// ══════════════════════════════════════════════
+const QualityPage = ({ studies }) => {
+  const [tool, setTool] = useState('rob2');
+  const robDomains = ['D1 · Randomisation process','D2 · Deviations from intended intervention','D3 · Missing outcome data','D4 · Measurement of the outcome','D5 · Selective reporting'];
+  const [scores, setScores] = useState({ 'd1':'Low','d2':'Low','d3':'Some concern','d4':'Low','d5':'Low' });
+  const keys = ['d1','d2','d3','d4','d5'];
+  const overall = Object.values(scores).includes('High') ? 'High' : Object.values(scores).includes('Some concern') ? 'Some concern' : 'Low';
+  const overallColor = overall === 'Low' ? 'var(--green)' : overall === 'High' ? 'var(--red)' : 'var(--amber)';
+
+  return (
+    <div>
+      <div className="page-header"><div className="page-header-row"><h1>Quality Appraisal</h1></div></div>
+      <div className="page-body">
+        <div className="tabs">
+          {[['rob2','RoB 2.0 (RCTs)'],['nos','Newcastle–Ottawa'],['grade','GRADE'],['casp','CASP (Qualitative)']].map(([k,l]) => <button key={k} className={`tab${tool===k?' active':''}`} onClick={() => setTool(k)}>{l}</button>)}
+        </div>
+        {tool === 'rob2' && (
+          <div className="grid-2">
+            <div className="card card-p">
+              <div className="section-title" style={{ marginBottom: 4 }}>Cochrane RoB 2.0</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 16 }}>For randomised trials. Select a judgement for each domain.</div>
+              {robDomains.map((d, i) => (
+                <div key={d} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: i < 4 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ fontSize: 13, color: 'var(--ink-mid)', flex: 1 }}>{d}</div>
+                  <select className="form-input" style={{ width: 140 }} value={scores[keys[i]]} onChange={e => setScores(s => ({ ...s, [keys[i]]: e.target.value }))}>
+                    <option>Low</option><option>Some concern</option><option>High</option>
+                  </select>
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '2px solid var(--border)' }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>Overall judgement</div>
+                <div style={{ fontWeight: 700, color: overallColor, fontSize: 14 }}>{overall === 'Low' ? '✓ Low risk' : overall === 'High' ? '✗ High risk' : '⚠ Some concern'}</div>
+              </div>
+            </div>
+            <div className="card card-p">
+              <div className="section-title" style={{ marginBottom: 4 }}>Traffic light summary</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 16 }}>Visual risk-of-bias chart across included studies</div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%' }}>
+                  <thead><tr><th>Study</th>{['D1','D2','D3','D4','D5','Overall'].map(d => <th key={d} style={{ textAlign: 'center' }}>{d}</th>)}</tr></thead>
+                  <tbody>
+                    {studies.filter(s => s.design === 'RCT').slice(0, 5).map(s => (
+                      <tr key={s.id}>
+                        <td style={{ fontSize: 12 }}>{s.authors} ({s.year})</td>
+                        {['Low','Low','Some concern','Low','Low','Low'].map((j, i) => (
+                          <td key={i} style={{ textAlign: 'center' }}>
+                            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: '50%', background: j === 'Low' ? 'var(--green)' : j === 'High' ? 'var(--red)' : 'var(--amber)' }} title={j} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+        {tool === 'grade' && (
+          <div className="card card-p" style={{ maxWidth: 600 }}>
+            <div className="section-title" style={{ marginBottom: 4 }}>GRADE evidence profile</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 16 }}>Rate the certainty of evidence for your primary outcome</div>
+            {[['Risk of bias','Not serious','Serious (-1)','Very serious (-2)'],['Inconsistency','Not serious','Serious (-1)','Very serious (-2)'],['Indirectness','Not serious','Serious (-1)','Very serious (-2)'],['Imprecision','Not serious','Serious (-1)','Very serious (-2)'],['Publication bias','Undetected','Strongly suspected',null]].map(([domain, ...opts]) => (
+              <div key={domain} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 13, color: 'var(--ink-mid)', width: 140 }}>{domain}</div>
+                <select className="form-input" style={{ flex: 1 }}>{opts.filter(Boolean).map(o => <option key={o}>{o}</option>)}</select>
+              </div>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '2px solid var(--border)' }}>
+              <div style={{ fontWeight: 600 }}>Certainty of evidence</div>
+              <div style={{ fontWeight: 700, color: 'var(--amber)' }}>⊕⊕⊕⊝ Moderate</div>
+            </div>
+          </div>
+        )}
+        {tool === 'nos' && (
+          <div className="card card-p" style={{ maxWidth: 600 }}>
+            <div className="section-title" style={{ marginBottom: 4 }}>Newcastle–Ottawa Scale</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 16 }}>For cohort and case-control studies. Stars awarded per item.</div>
+            {[['Selection (max 4★)','selection',4],['Comparability (max 2★)','comparability',2],['Outcome (max 3★)','outcome',3]].map(([label, key, max]) => (
+              <div key={key} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {Array.from({ length: max }, (_, i) => <span key={i} style={{ fontSize: 18, color: i < max - 1 ? 'var(--amber)' : 'var(--border-strong)', cursor: 'pointer' }}>★</span>)}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
+              <span style={{ fontWeight: 600 }}>Total</span>
+              <span style={{ fontWeight: 700, color: 'var(--teal)' }}>8/9 ★ — Good quality</span>
+            </div>
+          </div>
+        )}
+        {tool === 'casp' && (
+          <div className="card card-p" style={{ maxWidth: 600 }}>
+            <div className="section-title" style={{ marginBottom: 4 }}>CASP Qualitative Checklist</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 16 }}>10-item appraisal tool for qualitative studies</div>
+            {['Was there a clear statement of the aims of the research?','Is a qualitative methodology appropriate?','Was the research design appropriate to address the aims?','Was the recruitment strategy appropriate?','Was the data collected in a way that addressed the research issue?','Has the relationship between researcher and participants been considered?','Have ethical issues been taken into consideration?','Was the data analysis sufficiently rigorous?','Is there a clear statement of findings?','How valuable is the research?'].map((q, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-ghost)', width: 20, flexShrink: 0, marginTop: 2 }}>{i + 1}</span>
+                <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-mid)' }}>{q}</div>
+                <select className="form-input" style={{ width: 110 }}><option>Yes</option><option>Can't tell</option><option>No</option></select>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// TEAM PAGE
+// ══════════════════════════════════════════════
+const TeamPage = ({ team, setTeam, reviews, showToast }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ email: '', role: 'Reviewer', review_id: reviews[0]?.id || '' });
+  const [loading, setLoading] = useState(false);
+
+  const handleInvite = async () => {
+    if (!form.email.trim()) return;
+    setLoading(true);
+    const initials = form.email.slice(0, 2).toUpperCase();
+    const newMember = { id: Date.now().toString(), name: form.email, email: form.email, role: form.role, initials, review_id: form.review_id };
+    if (isConfigured && !DEMO_MODE) {
+      const { error } = await supabase.from('team_members').insert([{ email: form.email, role: form.role, review_id: form.review_id }]);
+      if (error) { showToast('Could not invite: ' + error.message, 'error'); setLoading(false); return; }
+    }
+    setTeam(prev => [...prev, newMember]); showToast(`Invite sent to ${form.email}`, 'success'); setShowModal(false); setForm({ email: '', role: 'Reviewer', review_id: reviews[0]?.id || '' });
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row"><h1>Team & Collaboration</h1><button className="btn btn-primary" onClick={() => setShowModal(true)}><Icon name="plus" size={15} />Invite member</button></div>
+      </div>
+      <div className="page-body">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
+          {team.map(m => (
+            <div className="team-card" key={m.id}>
+              <div className="team-avatar">{m.initials}</div>
+              <div className="team-info">
+                <div className="team-name">{m.name}</div>
+                <div className="team-role">{m.email !== m.name && m.email}</div>
+              </div>
+              <span className={`role-badge ${m.role === 'Lead reviewer' ? 'role-lead' : m.role === 'Reviewer' ? 'role-reviewer' : 'role-viewer'}`}>{m.role}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-lg">
+          <div className="section-head"><div className="section-title">Screening agreement</div></div>
+          <div className="card card-p" style={{ maxWidth: 500 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--ink-mid)' }}>Inter-rater reliability (κ)</span>
+              <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600, color: 'var(--teal)' }}>0.81 — Almost perfect</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--ink-mid)' }}>Records screened (total)</span>
+              <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600 }}>2,987</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--ink-mid)' }}>Agreements</span>
+              <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600 }}>2,901</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+              <span style={{ fontSize: 13, color: 'var(--ink-mid)' }}>Conflicts resolved by 3rd reviewer</span>
+              <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600 }}>86</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+          <div className="modal">
+            <div className="modal-header"><div className="modal-title">Invite team member</div><button className="modal-close" onClick={() => setShowModal(false)}><Icon name="x" /></button></div>
+            <div className="form-field" style={{ marginBottom: 12 }}>
+              <label className="form-label">Email address</label>
+              <input className="form-input" type="email" placeholder="colleague@university.edu" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">Role</label>
+                <select className="form-input" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
+                  <option>Lead reviewer</option><option>Reviewer</option><option>Viewer</option>
+                </select>
+              </div>
+              {reviews.length > 0 && <div className="form-field"><label className="form-label">Review</label><select className="form-input" value={form.review_id} onChange={e => setForm(f => ({ ...f, review_id: e.target.value }))}>{reviews.map(r => <option key={r.id} value={r.id}>{r.title.slice(0, 40)}…</option>)}</select></div>}
+            </div>
+            <div className="modal-footer"><button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleInvite} disabled={loading || !form.email.trim()}>{loading ? <span className="loading-spin" /> : 'Send invite'}</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// ══════════════════════════════════════════════════════
+// SEARCH STRATEGY GENERATOR
+// Generates MeSH/keyword strings for 8 major databases
+// Free rule-based tier + optional AI enhancement
+// ══════════════════════════════════════════════════════
+
+// ── Free keyword-based PICO parser ──
+function freeParsePICO(question) {
+  const q = question.toLowerCase();
+  const drugs_glp1 = ['glp-1','glp1','semaglutide','liraglutide','exenatide','dulaglutide','lixisenatide','tirzepatide','albiglutide','glucagon-like peptide'];
+  const drugs_sglt2 = ['sglt2','sglt-2','canagliflozin','dapagliflozin','empagliflozin','ertugliflozin','sodium-glucose'];
+  const conditions  = ['type 2 diabetes','t2dm','t2d','diabetes mellitus','hyperglycemi','glycaemi','glycemic'];
+  const outcomes_   = ['adverse','safety','risk','side effect','tolerability','preference','discrete choice','dce','conjoint','cost','quality of life','mortality','cardiovascular','hba1c','weight','efficacy','effectiveness'];
+
+  const P = conditions.filter(t => q.includes(t));
+  const I = [...drugs_glp1.filter(t=>q.includes(t)), ...drugs_sglt2.filter(t=>q.includes(t))];
+  const O = outcomes_.filter(t => q.includes(t));
+
+  return {
+    P: P.length ? P.join(', ') : 'adults with chronic disease',
+    I: I.length ? I.join(', ') : 'pharmacological intervention',
+    C: q.includes('compar') || q.includes('versus') || q.includes(' vs ') ? 'Active comparator or placebo' : 'Placebo or usual care',
+    O: O.length ? O.join(', ') : 'clinical outcomes'
+  };
+}
+
+// ── Free rule-based search string builder ──
+function buildSearchStrings(question, pico) {
+  const q = question.toLowerCase();
+
+  // Detect drug classes present
+  const hasGLP1  = /glp.?1|semaglutide|liraglutide|exenatide|dulaglutide|lixisenatide|tirzepatide|albiglutide|glucagon.like peptide/i.test(question);
+  const hasSGLT2 = /sglt.?2|canagliflozin|dapagliflozin|empagliflozin|ertugliflozin|sodium.glucose/i.test(question);
+  const hasDCE   = /discrete choice|conjoint|dce|preference|stated preference/i.test(question);
+  const hasSafety= /adverse|safety|risk|side effect|tolerability/i.test(question);
+  const hasHEOR  = /cost|economic|quality of life|qaly|burden|utilisation|utilization|heor/i.test(question);
+  const hasT2DM  = /type 2 diabetes|t2dm|t2d|diabetes mellitus/i.test(question);
+
+  // Drug blocks
+  const glp1Block = hasGLP1 ? `("Glucagon-Like Peptide-1 Receptor Agonists"[Mesh] OR "Glucagon-like peptide 1"[Mesh] OR GLP-1[tiab] OR GLP1[tiab] OR "GLP-1 RA"[tiab] OR "GLP-1 receptor agonist*"[tiab] OR exenatide[tiab] OR liraglutide[tiab] OR semaglutide[tiab] OR dulaglutide[tiab] OR lixisenatide[tiab] OR tirzepatide[tiab] OR albiglutide[tiab])` : '';
+  const sglt2Block = hasSGLT2 ? `("Sodium-Glucose Transporter 2 Inhibitors"[Mesh] OR "Sodium-Glucose Cotransporter 2"[Mesh] OR SGLT2[tiab] OR "SGLT-2"[tiab] OR "SGLT2 inhibitor*"[tiab] OR canagliflozin[tiab] OR dapagliflozin[tiab] OR empagliflozin[tiab] OR ertugliflozin[tiab])` : '';
+  const drugPubmed = [glp1Block, sglt2Block].filter(Boolean).join('\nOR\n') || '(YOUR_DRUG_TERM[Mesh] OR YOUR_DRUG_TERM[tiab])';
+
+  const t2dmBlock = hasT2DM ? `("Diabetes Mellitus, Type 2"[Mesh] OR "type 2 diabetes"[tiab] OR T2DM[tiab] OR T2D[tiab] OR "type 2 diabetes mellitus"[tiab])` : '(YOUR_POPULATION[Mesh] OR YOUR_POPULATION[tiab])';
+
+  const safetyBlock = hasSafety ? `("Drug-Related Side Effects and Adverse Reactions"[Mesh] OR risk*[tiab] OR safety[tiab] OR "side effect*"[tiab] OR tolerability[tiab] OR "adverse event*"[tiab] OR "adverse effect*"[tiab] OR complication*[tiab] OR ketoacidosis[tiab] OR hypoglycemi*[tiab] OR gastrointestinal[tiab] OR nausea[tiab] OR pancreatitis[tiab] OR cardiovascular[tiab] OR "heart failure"[tiab] OR renal[tiab] OR "genital mycotic"[tiab] OR "urinary tract infection*"[tiab])` : '';
+
+  const dceBlock = hasDCE ? `("discrete choice experiment*"[tiab] OR DCE[tiab] OR "conjoint analysis"[tiab] OR "stated preference*"[tiab] OR "best-worst scaling"[tiab] OR "patient preference*"[tiab] OR "willingness to pay"[tiab] OR "preference elicitation"[tiab])` : '';
+
+  const heorBlock = hasHEOR ? `("Cost-Benefit Analysis"[Mesh] OR "Quality of Life"[Mesh] OR "Quality-Adjusted Life Years"[Mesh] OR "cost-effectiveness"[tiab] OR "cost-utility"[tiab] OR "economic burden"[tiab] OR QALY[tiab] OR ICER[tiab] OR "health utility"[tiab] OR "resource utilization"[tiab])` : '';
+
+  const pubmedBlocks = [drugPubmed, t2dmBlock, safetyBlock, dceBlock, heorBlock].filter(Boolean);
+  const pubmed = pubmedBlocks.join('\nAND\n');
+
+  // Embase format
+  const drugEmbase = hasGLP1 || hasSGLT2 ? [
+    hasGLP1  ? "'glucagon like peptide 1 receptor agonist'/exp OR 'semaglutide'/exp OR 'liraglutide'/exp OR 'exenatide'/exp OR 'tirzepatide'/exp OR 'dulaglutide'/exp" : '',
+    hasSGLT2 ? "'sodium glucose cotransporter 2 inhibitor'/exp OR 'canagliflozin'/exp OR 'dapagliflozin'/exp OR 'empagliflozin'/exp OR 'ertugliflozin'/exp" : ''
+  ].filter(Boolean).join('\nOR\n') : "'DRUG_NAME'/exp OR DRUG:ti,ab";
+
+  const embase = `(${drugEmbase})\nAND ('type 2 diabetes mellitus'/exp OR 'non insulin dependent diabetes mellitus':ti,ab)${hasSafety ? "\nAND ('drug safety'/exp OR 'adverse drug reaction'/exp OR 'side effect':ti,ab OR 'tolerability':ti,ab)" : ''}${hasDCE ? "\nAND ('discrete choice experiment':ti,ab OR 'conjoint analysis':ti,ab OR 'patient preference':ti,ab)" : ''}${hasHEOR ? "\nAND ('cost effectiveness analysis'/exp OR 'quality adjusted life year'/exp OR 'economic evaluation':ti,ab)" : ''}`;
+
+  // Scopus format
+  const scopusDrug = hasGLP1 ? 'TITLE-ABS-KEY("GLP-1" OR "semaglutide" OR "liraglutide" OR "exenatide" OR "tirzepatide" OR "dulaglutide" OR "glucagon-like peptide")' : '';
+  const scopusSglt = hasSGLT2 ? 'TITLE-ABS-KEY("SGLT2" OR "SGLT-2" OR "canagliflozin" OR "dapagliflozin" OR "empagliflozin" OR "ertugliflozin")' : '';
+  const scopusDrugBlock = [scopusDrug, scopusSglt].filter(Boolean).join('\nOR ');
+  const scopus = `(${scopusDrugBlock || 'TITLE-ABS-KEY("YOUR_DRUG")'})
+AND TITLE-ABS-KEY("type 2 diabetes" OR "T2DM" OR "diabetes mellitus")${hasSafety ? '\nAND TITLE-ABS-KEY("adverse" OR "safety" OR "side effect" OR "risk" OR "tolerability")' : ''}${hasDCE ? '\nAND TITLE-ABS-KEY("discrete choice" OR "conjoint" OR "patient preference" OR "stated preference")' : ''}${hasHEOR ? '\nAND TITLE-ABS-KEY("cost-effectiveness" OR "economic" OR "QALY" OR "quality of life")' : ''}`;
+
+  // CINAHL format
+  const cinahl = `(MH "Hypoglycemic Agents+" OR MH "Glucagon-Like Peptide 1+" OR TI ( ${hasGLP1?'semaglutide OR liraglutide OR "GLP-1" OR tirzepatide':'YOUR_DRUG'} ) OR AB ( ${hasGLP1?'semaglutide OR liraglutide OR "GLP-1" OR tirzepatide':'YOUR_DRUG'} ))
+AND (MH "Diabetes Mellitus, Type 2" OR TI "type 2 diabetes" OR AB "T2DM")${hasSafety ? '\nAND (MH "Drug Toxicity+" OR TI adverse OR AB "side effect" OR TI safety)' : ''}${hasDCE ? '\nAND (TI "discrete choice" OR AB "conjoint analysis" OR TI "patient preference")' : ''}`;
+
+  // Cochrane format
+  const cochrane = `[mh "Glucagon-Like Peptide-1 Receptor Agonists"] OR [mh "Sodium-Glucose Cotransporter 2 Inhibitors"] OR (${hasGLP1?'semaglutide OR liraglutide OR tirzepatide':'DRUG_NAME'}):ti,ab,kw
+AND [mh "Diabetes Mellitus, Type 2"] OR "type 2 diabetes":ti,ab,kw${hasSafety ? '\nAND [mh "Drug-Related Side Effects and Adverse Reactions"] OR adverse:ti,ab,kw OR safety:ti,ab,kw' : ''}${hasDCE ? '\nAND "discrete choice":ti,ab,kw OR "conjoint":ti,ab,kw OR "patient preference":ti,ab,kw' : ''}`;
+
+  // PsycINFO format
+  const psycinfo = `DE "Hypoglycemic Agents" OR TI ( ${hasGLP1?'semaglutide OR liraglutide OR "GLP-1"':'DRUG_NAME'} ) OR AB ( ${hasGLP1?'semaglutide OR liraglutide':'DRUG_NAME'} )
+AND DE "Diabetes Mellitus" OR TI "type 2 diabetes" OR AB T2DM${hasDCE ? '\nAND TI "discrete choice" OR AB "conjoint" OR DE "Decision Making"' : ''}${hasSafety ? '\nAND DE "Drug Adverse Reactions" OR TI "side effect" OR AB adverse' : ''}`;
+
+  // EconLit / HEOR format
+  const econlit = hasHEOR
+    ? `( ${hasGLP1?'semaglutide OR liraglutide OR "GLP-1 receptor agonist"':'DRUG_NAME'} ) AND ( "type 2 diabetes" OR T2DM ) AND ( "cost-effectiveness" OR "cost-utility" OR "economic evaluation" OR "budget impact" OR QALY OR ICER OR "health technology assessment" OR HTA )`
+    : `( DRUG_NAME ) AND ( POPULATION ) AND ( "economic evaluation" OR "cost-effectiveness" OR "quality of life" OR QALY )`;
+
+  // WHO ICTRP / ClinicalTrials
+  const clintrials = `Condition: "Type 2 Diabetes"\nIntervention: ${hasGLP1?'"GLP-1 receptor agonist" OR "semaglutide" OR "liraglutide"':'"DRUG_NAME"'}${hasSGLT2?' OR "SGLT-2 inhibitor" OR "empagliflozin" OR "dapagliflozin"':''}\nStudy type: Interventional`;
+
+  return { pubmed, embase, scopus, cinahl, cochrane, psycinfo, econlit, clintrials };
+}
+
+// ── Keyword screener (free, no API) ──
+function keywordScreen(title, authors, journal) {
+  const text = (title+' '+(authors||'')+' '+(journal||'')).toLowerCase();
+  const drugTerms = ['glp-1','glp1','glucagon-like peptide','semaglutide','liraglutide','exenatide','dulaglutide','lixisenatide','tirzepatide','albiglutide','ozempic','wegovy','victoza','trulicity','sglt2','sglt-2','sodium-glucose','canagliflozin','dapagliflozin','empagliflozin','ertugliflozin','invokana','jardiance','farxiga','forxiga'];
+  const contextTerms = ['type 2 diabetes','t2dm','t2d','diabetes mellitus','hyperglycemi','adverse','safety','side effect','risk','tolerability','complication','pancreatitis','ketoacidosis','dka','hypoglycemi','nausea','gastrointestinal','cardiovascular','renal','kidney','heart failure','genital','urinary','preference','discrete choice','conjoint','efficacy','randomized','randomised','systematic review','meta-analysis','cohort','pharmacovigilance','cost','economic'];
+  const excludeTerms = ['type 1 diabetes','t1dm','t1d','bariatric','gastric bypass','in vitro','in vivo','animal model','mice model','rat model','rodent'];
+  const drugMatches = drugTerms.filter(k=>text.includes(k));
+  const contextMatches = contextTerms.filter(k=>text.includes(k));
+  const excludeMatches = excludeTerms.filter(k=>text.includes(k));
+  const hasDrug = drugMatches.length > 0;
+  const hasCtx  = contextMatches.length > 0;
+  const hasExcl = excludeMatches.length > 0;
+  if (hasExcl && !hasDrug) return { decision:'exclude', reason:'Exclusion signal: '+excludeMatches.slice(0,2).join(', ')+'. No relevant drug terms found.', confidence:'high' };
+  if (hasDrug && hasCtx) {
+    if (hasExcl) return { decision:'uncertain', reason:'Drug terms found ('+drugMatches[0]+') with context, but also exclusion signal ('+excludeMatches[0]+'). Review needed.', confidence:'moderate' };
+    return { decision:'include', reason:'Drug: '+drugMatches.slice(0,2).join(', ')+' · Context: '+contextMatches.slice(0,2).join(', '), confidence: contextMatches.length>2?'high':'moderate' };
+  }
+  if (hasDrug) return { decision:'uncertain', reason:'Drug term ('+drugMatches[0]+') found but context unclear. Manual review recommended.', confidence:'low' };
+  return { decision:'exclude', reason:'No GLP-1 RA or SGLT-2 inhibitor terms found in title or journal.', confidence:'high' };
+}
+
+// ── CSV parser ──
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].replace(/^\uFEFF/,'').split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+  const rows = [];
+  for (let i=1;i<lines.length;i++){
+    const cols=[];let cur='',inQ=false;
+    for(let ci=0;ci<lines[i].length;ci++){
+      const ch=lines[i][ci];
+      if(ch==='"'&&!inQ)inQ=true;
+      else if(ch==='"'&&inQ&&lines[i][ci+1]==='"'){cur+='"';ci++;}
+      else if(ch==='"'&&inQ)inQ=false;
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    cols.push(cur.trim());
+    if(cols.length>=2){const row={};headers.forEach((h,idx)=>{row[h]=(cols[idx]||'').replace(/^"|"$/g,'');});rows.push(row);}
+  }
+  return rows;
+}
+
+const SearchStrategyPage = ({ reviews }) => {
+  const [question, setQuestion] = useState('');
+  const [pico, setPico]         = useState(null);
+  const [strings, setStrings]   = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [apiKey, setApiKey]     = useState('');
+  const [useAI, setUseAI]       = useState(false);
+  const [copiedDb, setCopiedDb] = useState('');
+  const [selectedReview, setSelectedReview] = useState(reviews[0]?.id || '');
+
+  const DB_META = [
+    { key:'pubmed',     label:'PubMed / MEDLINE',   color:'#C62828', note:'MeSH + [tiab] field tags' },
+    { key:'embase',     label:'Embase',              color:'#6B2FA0', note:'Emtree + /exp notation' },
+    { key:'scopus',     label:'Scopus',              color:'#0D47A1', note:'TITLE-ABS-KEY format' },
+    { key:'cinahl',     label:'CINAHL',              color:'#0D7377', note:'MH heading format' },
+    { key:'cochrane',   label:'Cochrane CENTRAL',    color:'#2E7D32', note:'mh + ti,ab,kw' },
+    { key:'psycinfo',   label:'PsycINFO',            color:'#E65100', note:'DE descriptor format' },
+    { key:'econlit',    label:'EconLit / HEOR',      color:'#4A148C', note:'Economic & HTA databases' },
+    { key:'clintrials', label:'ClinicalTrials / WHO ICTRP', color:'#1565C0', note:'Registry search fields' },
+  ];
+
+  const handleGenerate = async () => {
+    if (!question.trim()) return;
+    setLoading(true); setPico(null); setStrings(null);
+    if (useAI && apiKey.trim()) {
+      // AI-enhanced via Anthropic API
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':apiKey.trim(),'anthropic-version':'2023-06-01'},
+          body: JSON.stringify({
+            model:'claude-sonnet-4-6', max_tokens:3000,
+            system:`You are an expert systematic review librarian and health economist. Given a research question, you:
+1. Parse it into PICO components
+2. Generate optimised search strings for 8 databases
+
+Return ONLY valid JSON in this exact structure:
+{
+  "pico": {"P":"...","I":"...","C":"...","O":"..."},
+  "strings": {
+    "pubmed": "full PubMed search string with MeSH terms and [tiab] tags",
+    "embase": "Embase search with Emtree /exp terms",
+    "scopus": "Scopus TITLE-ABS-KEY format",
+    "cinahl": "CINAHL MH heading format",
+    "cochrane": "Cochrane mh + ti,ab,kw format",
+    "psycinfo": "PsycINFO DE descriptor format",
+    "econlit": "EconLit/HEOR keyword string for economic databases",
+    "clintrials": "ClinicalTrials.gov / WHO ICTRP registry search fields"
+  }
+}`,
+            messages:[{role:'user',content:'Research question: '+question}]
+          })
+        });
+        const data = await resp.json();
+        const raw  = data.content[0].text.replace(/```json|```/g,'').trim();
+        const parsed = JSON.parse(raw);
+        setPico(parsed.pico);
+        setStrings(parsed.strings);
+      } catch(e) {
+        // Fallback to free
+        const p = freeParsePICO(question);
+        setPico(p); setStrings(buildSearchStrings(question, p));
+      }
+    } else {
+      // Free rule-based
+      const p = freeParsePICO(question);
+      setPico(p); setStrings(buildSearchStrings(question, p));
+    }
+    setLoading(false);
+  };
+
+  const copyToClipboard = (key, text) => {
+    navigator.clipboard.writeText(text).then(() => { setCopiedDb(key); setTimeout(()=>setCopiedDb(''),2000); });
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <h1>Search Strategy Generator</h1>
+          <span className="free-badge">FREE · runs in browser</span>
+        </div>
+      </div>
+      <div className="page-body">
+
+        {/* Input card */}
+        <div className="ss-card">
+          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:'var(--ink)'}}>Paste your research question or PICO</div>
+          <textarea className="form-input" style={{width:'100%',minHeight:80,marginBottom:10}}
+            placeholder="e.g. In adults with type 2 diabetes, what are the risk attributes of GLP-1 receptor agonists and SGLT-2 inhibitors that influence patient treatment preferences in discrete choice experiments?"
+            value={question} onChange={e=>setQuestion(e.target.value)}/>
+
+          {/* AI toggle */}
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12,flexWrap:'wrap'}}>
+            <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:13}}>
+              <input type="checkbox" checked={useAI} onChange={e=>setUseAI(e.target.checked)} style={{width:14,height:14}}/>
+              Enhance with AI (optional)
+            </label>
+            {useAI && (
+              <input className="form-input" type="password" style={{flex:1,minWidth:200,fontSize:12,fontFamily:'JetBrains Mono,monospace'}}
+                placeholder="sk-ant-... (Anthropic API key — for improved MeSH mapping)"
+                value={apiKey} onChange={e=>setApiKey(e.target.value)}/>
+            )}
+            {!useAI && <span style={{fontSize:12,color:'var(--ink-soft)'}}>Free keyword mode active — no API key needed</span>}
+          </div>
+
+          {reviews.length > 0 && (
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+              <span style={{fontSize:12,color:'var(--ink-soft)',whiteSpace:'nowrap'}}>Link to review:</span>
+              <select className="form-input" style={{flex:1}} value={selectedReview} onChange={e=>setSelectedReview(e.target.value)}>
+                <option value="">— None —</option>
+                {reviews.map(r=><option key={r.id} value={r.id}>{r.title}</option>)}
+              </select>
+            </div>
+          )}
+
+          <button className="btn btn-primary" onClick={handleGenerate} disabled={loading||!question.trim()} style={{minWidth:160}}>
+            {loading ? <><span className="loading-spin"/>Generating…</> : <><Icon name="zap" size={14}/>Generate search strings</>}
+          </button>
+        </div>
+
+        {/* PICO parsed */}
+        {pico && (
+          <div className="ss-card">
+            <div style={{fontWeight:600,fontSize:14,marginBottom:8,color:'var(--ink)'}}>Parsed PICO</div>
+            <div className="pico-parsed">
+              {Object.entries(pico).map(([k,v])=>(
+                <div className="pico-box" key={k}>
+                  <div className="pico-box-label">{k} — {k==='P'?'Population':k==='I'?'Intervention':k==='C'?'Comparator':'Outcome'}</div>
+                  <div className="pico-box-val">{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Database search strings */}
+        {strings && (
+          <>
+            <div style={{fontWeight:600,fontSize:14,color:'var(--ink)',marginBottom:10}}>
+              Search strings — {Object.keys(strings).length} databases
+            </div>
+            <div className="ss-db-grid">
+              {DB_META.map(db => strings[db.key] ? (
+                <div className="ss-db-box" key={db.key}>
+                  <div className="ss-db-name">
+                    <span className="ss-db-icon" style={{background:db.color}}/>
+                    {db.label}
+                    <span style={{fontSize:10,color:'var(--ink-ghost)',fontWeight:400,marginLeft:'auto'}}>{db.note}</span>
+                  </div>
+                  <div className="ss-query">{strings[db.key]}</div>
+                  <button className="ss-copy-btn" onClick={()=>copyToClipboard(db.key,strings[db.key])}>
+                    {copiedDb===db.key ? '✓ Copied!' : '⎘ Copy'}
+                  </button>
+                </div>
+              ) : null)}
+            </div>
+          </>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+const SettingsPage = ({ user, showToast }) => {
+  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    if (isConfigured && !DEMO_MODE) {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: fullName } });
+      if (error) { showToast(error.message, 'error'); } else { showToast('Profile updated', 'success'); }
+    } else { showToast('Profile saved (demo)', 'success'); }
+    setSaving(false);
+  };
+
+  return (
+    <div>
+      <div className="page-header"><div className="page-header-row"><h1>Settings</h1></div></div>
+      <div className="page-body">
+        <div className="card card-p" style={{ maxWidth: 500, marginBottom: 16 }}>
+          <div className="section-title" style={{ marginBottom: 14 }}>Profile</div>
+          <div className="form-field" style={{ marginBottom: 12 }}>
+            <label className="form-label">Full name</label>
+            <input className="form-input" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Dr. Jane Smith" />
+          </div>
+          <div className="form-field" style={{ marginBottom: 14 }}>
+            <label className="form-label">Email</label>
+            <input className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.6 }} />
+          </div>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? <span className="loading-spin" /> : 'Save changes'}</button>
+        </div>
+        <div className="card card-p" style={{ maxWidth: 500 }}>
+          <div className="section-title" style={{ marginBottom: 14 }}>Supabase connection</div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: isConfigured ? 'var(--green)' : 'var(--amber)', display: 'inline-block' }} />
+            <span style={{ fontSize: 13, color: 'var(--ink-mid)' }}>{isConfigured ? 'Connected to Supabase' : 'Running in demo mode — add Supabase credentials to enable full functionality'}</span>
+          </div>
+          {isConfigured && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 10 }}>Project URL: <span style={{ fontFamily: 'JetBrains Mono', fontSize: 11 }}>{SUPABASE_URL}</span></div>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════
+// MAIN APP
+// ══════════════════════════════════════════════
+const App = () => {
+  const [user, setUser] = useState(null);
+  const [page, setPage] = useState('home');
+  const [reviews, setReviews] = useState(DEMO_REVIEWS);
+  const [studies, setStudies] = useState(DEMO_STUDIES);
+  const [team, setTeam] = useState(DEMO_TEAM);
+  const [loading, setLoading] = useState(!DEMO_MODE && isConfigured);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = 'success') => { setToast({ msg, type }); };
+
+  useEffect(() => {
+    if (DEMO_MODE) { setUser({ email: 'demo@researcher.edu', user_metadata: { full_name: 'Demo Researcher' } }); return; }
+    if (!isConfigured) return;
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) setUser(data.session.user);
+      setLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      setLoading(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user || !isConfigured || DEMO_MODE) return;
+    supabase.from('reviews').select('*').order('created_at', { ascending: false }).then(({ data }) => data && setReviews(data));
+    supabase.from('studies').select('*').order('created_at', { ascending: false }).then(({ data }) => data && setStudies(data));
+    supabase.from('team_members').select('*').then(({ data }) => data && setTeam(data));
+  }, [user]);
+
+  const handleLogout = async () => {
+    if (isConfigured && !DEMO_MODE) await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  if (!isConfigured && !DEMO_MODE) return <SetupScreen />;
+  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}><div className="loading-spin" style={{ width: 36, height: 36, borderColor: 'rgba(38,83,163,0.2)', borderTopColor: 'var(--accent)' }} /></div>;
+  if (!user) return <AuthScreen onLogin={setUser} />;
+
+  const pages = { home: <Dashboard reviews={reviews} studies={studies} onNav={setPage} />, reviews: <ReviewsPage reviews={reviews} setReviews={setReviews} user={user} showToast={showToast} />, library: <LibraryPage studies={studies} setStudies={setStudies} reviews={reviews} showToast={showToast} />, prisma: <PrismaPage reviews={reviews} />, extraction: <ExtractionPage studies={studies} setStudies={setStudies} showToast={showToast} />, quality: <QualityPage studies={studies} />, team: <TeamPage team={team} setTeam={setTeam} reviews={reviews} showToast={showToast} />, settings: <SettingsPage user={user} showToast={showToast} />,
+      strategy: <SearchStrategyPage reviews={reviews} /> };
+
+  return (
+    <div className="app-root">
+      <Sidebar active={page} onNav={setPage} user={user} onLogout={handleLogout} />
+      <main className="main-content">{pages[page] || pages.home}</main>
+      {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
